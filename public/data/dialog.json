@@ -1,0 +1,1247 @@
+{
+ "version": 2,
+ "names": {
+  "f": [
+   "Lena",
+   "Mia",
+   "Emma",
+   "Zoé",
+   "Léa",
+   "Sophie",
+   "Anne",
+   "Julie",
+   "Nora",
+   "Lisa",
+   "Carla",
+   "Marie",
+   "Aline",
+   "Yasmin",
+   "Elif",
+   "Chiara",
+   "Inês",
+   "Fatou",
+   "Hanna",
+   "Mila",
+   "Sarah",
+   "Tessy",
+   "Joëlle",
+   "Nadine"
+  ],
+  "m": [
+   "Luca",
+   "Noah",
+   "Tom",
+   "Ben",
+   "Max",
+   "Gilles",
+   "Pit",
+   "Jang",
+   "Marc",
+   "Paul",
+   "Joé",
+   "Tiago",
+   "Rui",
+   "Luc",
+   "Ahmed",
+   "Sven",
+   "Claude",
+   "Romain",
+   "Mathis",
+   "Yannick",
+   "Kevin",
+   "Jeff",
+   "Dan",
+   "Raoul"
+  ],
+  "kid": [
+   "Lili",
+   "Nico",
+   "Fifi",
+   "Tim",
+   "Loulou",
+   "Benni",
+   "Emil",
+   "Ella",
+   "Mats",
+   "Juju"
+  ]
+ },
+ "pers": {
+  "sonneg": {
+   "lb": "sonneg",
+   "de": "fröhlich",
+   "voice": 1.08
+  },
+  "grummeleg": {
+   "lb": "grummeleg",
+   "de": "grummelig",
+   "voice": 0.9
+  },
+  "schei": {
+   "lb": "schei",
+   "de": "schüchtern",
+   "voice": 1.12
+  },
+  "gespreicheg": {
+   "lb": "gespréicheg",
+   "de": "gesprächig",
+   "voice": 1.04
+  },
+  "dreemeg": {
+   "lb": "dreemeg",
+   "de": "verträumt",
+   "voice": 0.96
+  },
+  "sportlech": {
+   "lb": "sportlech",
+   "de": "sportlich",
+   "voice": 1.02
+  },
+  "nerd": {
+   "lb": "wëssbegäereg",
+   "de": "wissbegierig",
+   "voice": 1.0
+  }
+ },
+ "lines": [
+  [
+   "greet",
+   "Moien!",
+   "Hallo!",
+   "t:moien,t:metteg"
+  ],
+  [
+   "greet",
+   "Gudde Moien! Scho sou fréi ënnerwee?",
+   "Guten Morgen! Schon so früh unterwegs?",
+   "t:moien"
+  ],
+  [
+   "greet",
+   "Moien! Wat e schéinen Dag, oder?",
+   "Hallo! Was für ein schöner Tag, oder?",
+   "t:moien,t:metteg,p:sonneg"
+  ],
+  [
+   "greet",
+   "Gudden Owend!",
+   "Guten Abend!",
+   "t:owend"
+  ],
+  [
+   "greet",
+   "Nach sou spéit ënnerwee, Klengen?",
+   "Noch so spät unterwegs, Kleiner?",
+   "t:nuecht"
+  ],
+  [
+   "greet",
+   "Hmpf. Moien.",
+   "Hmpf. Hallo.",
+   "p:grummeleg"
+  ],
+  [
+   "greet",
+   "Oh! ... Moien ...",
+   "Oh! ... Hallo ...",
+   "p:schei"
+  ],
+  [
+   "greet",
+   "Hee, Blëtz! Gëff mer fënnef!",
+   "Hey, Blitz! Gib mir fünf!",
+   "p:sportlech,r:kid"
+  ],
+  [
+   "greet",
+   "Salut! Ça va?",
+   "Hallo! Wie geht's?",
+   "r:student,r:tourist"
+  ],
+  [
+   "greet",
+   "Bonjour, petit lion!",
+   "Guten Tag, kleiner Löwe!",
+   "r:tourist"
+  ],
+  [
+   "greet",
+   "Moien, Här Léiw!",
+   "Hallo, Herr Löwe!",
+   "r:kid"
+  ],
+  [
+   "cute",
+   "Oh, kuck emol, wéi séiss!",
+   "Oh, schau mal, wie süß!",
+   ""
+  ],
+  [
+   "cute",
+   "Mama, kuck! E Léiw mat enger Glühbir um Schwanz!",
+   "Mama, schau! Ein Löwe mit einer Glühbirne am Schwanz!",
+   "r:kid"
+  ],
+  [
+   "cute",
+   "Seng Mähn knistert jo!",
+   "Seine Mähne knistert ja!",
+   ""
+  ],
+  [
+   "cute",
+   "Dierf ech dech emol streechelen? ... Leiwer net, oder?",
+   "Darf ich dich mal streicheln? ... Lieber nicht, oder?",
+   "p:schei,p:sonneg"
+  ],
+  [
+   "cute",
+   "Dat gëtt e Foto fir mäi Stories!",
+   "Das wird ein Foto für meine Stories!",
+   "r:student,r:tourist"
+  ],
+  [
+   "cute",
+   "En echte Léiw, hei zu Belval? Ech dreemen!",
+   "Ein echter Löwe, hier in Belval? Ich träume!",
+   "p:dreemeg"
+  ],
+  [
+   "cute",
+   "Du bass dee rouden Léiw aus dem Wopen, oder?",
+   "Du bist der rote Löwe aus dem Wappen, oder?",
+   "p:nerd,r:senior"
+  ],
+  [
+   "cute",
+   "Haaalo, Klengen! Wien ass e bravt Léiwchen?",
+   "Haaallo, Kleiner! Wer ist ein braves Löwchen?",
+   "p:sonneg"
+  ],
+  [
+   "cute",
+   "Däi Schwanz blénkt méi hell wéi meng Vëlosluucht!",
+   "Dein Schwanz leuchtet heller als mein Fahrradlicht!",
+   "r:student,p:sportlech"
+  ],
+  [
+   "amb",
+   "Den Zuch op Lëtzebuerg huet erëm Verspéidung.",
+   "Der Zug nach Luxemburg hat wieder Verspätung.",
+   "l:station,r:commuter",
+   "talk_train"
+  ],
+  [
+   "amb",
+   "Wéini kënnt de Bus dann endlech?",
+   "Wann kommt der Bus denn endlich?",
+   "r:commuter",
+   "talk_bus"
+  ],
+  [
+   "amb",
+   "Ouni Kaffi geet bei mir näischt.",
+   "Ohne Kaffee geht bei mir nichts.",
+   "t:moien",
+   "talk_coffee"
+  ],
+  [
+   "amb",
+   "Haut den Owend ass e Concert an der Rockhal.",
+   "Heute Abend ist ein Konzert in der Rockhal.",
+   "l:rockhal",
+   "talk_rockhal"
+  ],
+  [
+   "amb",
+   "Muer hunn ech Examen op der Uni.",
+   "Morgen habe ich Prüfung an der Uni.",
+   "r:student",
+   "talk_exam"
+  ],
+  [
+   "amb",
+   "Mäi Bopa huet nach bei den Héichiewen geschafft.",
+   "Mein Opa hat noch an den Hochöfen gearbeitet.",
+   "l:furnace,r:senior",
+   "talk_furnace"
+  ],
+  [
+   "amb",
+   "Hei am Minett ass d'Äerd rout vum Eisen.",
+   "Hier im Minett ist die Erde rot vom Eisen.",
+   "",
+   "talk_minett"
+  ],
+  [
+   "amb",
+   "Ech hätt elo gär Gromperekichelcher.",
+   "Ich hätte jetzt gern Kartoffelpuffer.",
+   "",
+   "talk_food"
+  ],
+  [
+   "amb",
+   "Ech fuere all Dag mam Vëlo iwwer de Vëlodukt.",
+   "Ich fahre jeden Tag mit dem Rad über den Vëlodukt.",
+   "p:sportlech",
+   "talk_velo"
+  ],
+  [
+   "amb",
+   "Um Rond-Point Raemerich stoung ech eng hallef Stonn am Stau.",
+   "Am Kreisel Raemerich stand ich eine halbe Stunde im Stau.",
+   "r:commuter,r:worker",
+   "talk_traffic"
+  ],
+  [
+   "amb",
+   "Wou hunn ech dann elo erëm mäi Velo ofgestallt?",
+   "Wo hab ich denn jetzt wieder mein Fahrrad abgestellt?",
+   "p:dreemeg"
+  ],
+  [
+   "amb",
+   "Nach dräi Kapitel bis Freides ... dat packen ech.",
+   "Noch drei Kapitel bis Freitag ... das schaffe ich.",
+   "r:student"
+  ],
+  [
+   "amb",
+   "D'Bibliothéik am Learning Centre ass esou roueg, do schlofen ech ëmmer an.",
+   "Die Bibliothek im Learning Centre ist so ruhig, da schlafe ich immer ein.",
+   "r:student,l:uni"
+  ],
+  [
+   "amb",
+   "Kuckt emol, d'Héichiewe gesinn am Owesliicht aus wéi e Schlass.",
+   "Schaut mal, die Hochöfen sehen im Abendlicht aus wie ein Schloss.",
+   "t:owend,p:dreemeg,l:furnace"
+  ],
+  [
+   "amb",
+   "Hätt ech nëmmen e Prabbeli matgeholl.",
+   "Hätte ich nur einen Regenschirm mitgenommen.",
+   "",
+   "talk_weather"
+  ],
+  [
+   "amb",
+   "Meng Batterie ass erëm eidel. Wéi ëmmer.",
+   "Mein Akku ist wieder leer. Wie immer.",
+   "r:student,r:commuter"
+  ],
+  [
+   "amb",
+   "Ech sinn nëmme kuerz an d'Plaza ... fir eng Stonn oder dräi.",
+   "Ich bin nur kurz in der Plaza ... für eine Stunde oder drei.",
+   "l:plaza,p:gespreicheg"
+  ],
+  [
+   "amb",
+   "Fënnef Kilometer haut! Muer ginn et sechs.",
+   "Fünf Kilometer heute! Morgen werden es sechs.",
+   "r:jogger"
+  ],
+  [
+   "amb",
+   "Nach eng Ronn ëm d'Waasserbecken, da sinn ech fäerdeg.",
+   "Noch eine Runde um das Wasserbecken, dann bin ich fertig.",
+   "r:jogger,p:sportlech"
+  ],
+  [
+   "amb",
+   "Ech hunn haut nach näischt giess. Wou ass déi nächst Bäckerei?",
+   "Ich habe heute noch nichts gegessen. Wo ist die nächste Bäckerei?",
+   "r:tourist,r:student"
+  ],
+  [
+   "amb",
+   "Pardon, wéi kommen ech bei d'Rockhal?",
+   "Entschuldigung, wie komme ich zur Rockhal?",
+   "r:tourist"
+  ],
+  [
+   "amb",
+   "Esou vill Glas an Eisen hei. Ganz anescht wéi d'Stad.",
+   "So viel Glas und Eisen hier. Ganz anders als die Hauptstadt.",
+   "r:tourist"
+  ],
+  [
+   "amb",
+   "Fréier hu mer hei nëmmen Damp a Feier gesinn.",
+   "Früher haben wir hier nur Rauch und Feuer gesehen.",
+   "r:senior"
+  ],
+  [
+   "amb",
+   "Meng Knéien hunn haut keng Loscht op Trapen.",
+   "Meine Knie haben heute keine Lust auf Treppen.",
+   "r:senior"
+  ],
+  [
+   "amb",
+   "Deen neie Kaffi an der Gare ass gar net schlecht.",
+   "Der neue Kaffee am Bahnhof ist gar nicht schlecht.",
+   "l:station"
+  ],
+  [
+   "amb",
+   "Quai 2 oder Quai 3? Ech verwiessel dat ëmmer.",
+   "Gleis 2 oder Gleis 3? Ich verwechsle das immer.",
+   "l:station,p:dreemeg"
+  ],
+  [
+   "amb",
+   "Ech hunn eng Iddi fir e Song! ... Ah, schonn erëm fort.",
+   "Ich habe eine Idee für einen Song! ... Ah, schon wieder weg.",
+   "r:musician"
+  ],
+  [
+   "amb",
+   "Muer spille mir am Kulturfabrik. Kënns de?",
+   "Morgen spielen wir in der Kulturfabrik. Kommst du?",
+   "r:musician"
+  ],
+  [
+   "amb",
+   "Schaff, schaff, Hysje kaf ... a wou ass de Feierowend?",
+   "Arbeiten, arbeiten, Häuschen kaufen ... und wo ist der Feierabend?",
+   "r:worker"
+  ],
+  [
+   "amb",
+   "Dee Krunn do uewen schaffe mir nach bis Dezember.",
+   "An dem Kran da oben arbeiten wir noch bis Dezember.",
+   "r:worker"
+  ],
+  [
+   "amb",
+   "Ech wëll och e Léiw als Hausdéier!",
+   "Ich will auch einen Löwen als Haustier!",
+   "r:kid"
+  ],
+  [
+   "amb",
+   "Glacë! Ech wëll eng Glacë!",
+   "Eis! Ich will ein Eis!",
+   "r:kid"
+  ],
+  [
+   "amb",
+   "Hues du meng Int gesinn? Si ass fortgelaf!",
+   "Hast du meine Ente gesehen? Sie ist weggelaufen!",
+   "r:kid",
+   "q_duck"
+  ],
+  [
+   "amb",
+   "Et ass sou roueg haut. Fast ze roueg.",
+   "Es ist so ruhig heute. Fast zu ruhig.",
+   "p:dreemeg,p:schei"
+  ],
+  [
+   "amb",
+   "Wosst dir, datt d'Héichiewen bal 80 Meter héich sinn?",
+   "Wusstet ihr, dass die Hochöfen fast 80 Meter hoch sind?",
+   "p:nerd,l:furnace"
+  ],
+  [
+   "amb",
+   "Ech liesen elo e Buch iwwer Quantephysik. Fir de Spaass.",
+   "Ich lese gerade ein Buch über Quantenphysik. Zum Spaß.",
+   "p:nerd"
+  ],
+  [
+   "amb",
+   "Mäi Wee op d'Aarbecht: dräi Minutten. Mäi Wee zréck: eng Stonn mat Shopping.",
+   "Mein Weg zur Arbeit: drei Minuten. Mein Weg zurück: eine Stunde mit Shopping.",
+   "p:gespreicheg,l:plaza"
+  ],
+  [
+   "amb",
+   "Nee, mee wierklech, d'Mamm vun hirem Frënd huet gesot ...",
+   "Nein, aber wirklich, die Mutter ihres Freundes hat gesagt ...",
+   "p:gespreicheg"
+  ],
+  [
+   "amb",
+   "Elo grad e Kaffi an d'Sonn. Méi brauch ech net.",
+   "Jetzt einen Kaffee in der Sonne. Mehr brauche ich nicht.",
+   "p:sonneg,t:metteg"
+  ],
+  [
+   "amb",
+   "Firwat ass et ëmmer Méindeg?",
+   "Warum ist es immer Montag?",
+   "p:grummeleg"
+  ],
+  [
+   "amb",
+   "Dës Tauwe gi mer op d'Nerven.",
+   "Diese Tauben gehen mir auf die Nerven.",
+   "p:grummeleg,r:senior"
+  ],
+  [
+   "amb",
+   "D'Stären gesäit een hei am Minett besser wéi an der Stad.",
+   "Die Sterne sieht man hier im Minett besser als in der Stadt.",
+   "t:nuecht,p:dreemeg"
+  ],
+  [
+   "amb",
+   "Ech sollt wierklech schlofe goen ...",
+   "Ich sollte wirklich schlafen gehen ...",
+   "t:nuecht"
+  ],
+  [
+   "amb",
+   "No dem Concert hunn ech nach ëmmer e Piipsen am Ouer.",
+   "Nach dem Konzert habe ich immer noch ein Piepen im Ohr.",
+   "t:nuecht,l:rockhal"
+  ],
+  [
+   "amb",
+   "De Sonnenënnergang hannert der Massenoire ... wonnerbar.",
+   "Der Sonnenuntergang hinter der Massenoire ... wunderbar.",
+   "t:owend"
+  ],
+  [
+   "shock",
+   "Haha! Dat huet gekriwwelt!",
+   "Haha! Das hat gekribbelt!",
+   "p:sonneg"
+  ],
+  [
+   "shock",
+   "Wow! Ech si méi waakreg wéi no dräi Kaffien!",
+   "Wow! Ich bin wacher als nach drei Kaffees!",
+   "p:sonneg,p:sportlech"
+  ],
+  [
+   "shock",
+   "Dat soen ech denger Mamm!",
+   "Das sag ich deiner Mama!",
+   "p:grummeleg"
+  ],
+  [
+   "shock",
+   "Meng Frisur! Weess du, wéi laang ech dofir gebraucht hunn?!",
+   "Meine Frisur! Weißt du, wie lange ich dafür gebraucht habe?!",
+   "p:grummeleg,p:gespreicheg"
+  ],
+  [
+   "shock",
+   "Elo ass et awer genuch, du kleng Béischt!",
+   "Jetzt reicht's aber, du kleines Biest!",
+   "p:grummeleg"
+  ],
+  [
+   "shock",
+   "Iiiek! ... Ech ... ech ginn elo heem.",
+   "Iiiek! ... Ich ... ich geh jetzt nach Hause.",
+   "p:schei"
+  ],
+  [
+   "shock",
+   "Dat muss ech direkt menger Schwëster erzielen!",
+   "Das muss ich sofort meiner Schwester erzählen!",
+   "p:gespreicheg"
+  ],
+  [
+   "shock",
+   "Hues du dat gesinn? Ech hu gelucht wéi e Chrëschtbeemchen!",
+   "Hast du das gesehen? Ich habe geleuchtet wie ein Weihnachtsbäumchen!",
+   "p:gespreicheg,p:sonneg"
+  ],
+  [
+   "shock",
+   "Ech gesinn ... Stären. Ganz vill Stären.",
+   "Ich sehe ... Sterne. Ganz viele Sterne.",
+   "p:dreemeg"
+  ],
+  [
+   "shock",
+   "Besser wéi all Energy-Drink!",
+   "Besser als jeder Energy-Drink!",
+   "p:sportlech"
+  ],
+  [
+   "shock",
+   "Faszinéierend! Elektresch Opluedung duerch e Léiw!",
+   "Faszinierend! Elektrische Aufladung durch einen Löwen!",
+   "p:nerd"
+  ],
+  [
+   "shock",
+   "Dat waren op d'mannst zéngdausend Volt!",
+   "Das waren mindestens zehntausend Volt!",
+   "p:nerd"
+  ],
+  [
+   "shock",
+   "Nach eng Kéier! Nach eng Kéier!",
+   "Nochmal! Nochmal!",
+   "r:kid"
+  ],
+  [
+   "shock",
+   "Esou eppes hunn ech zanter der Schmelz net méi erlieft!",
+   "So etwas habe ich seit dem Stahlwerk nicht mehr erlebt!",
+   "r:senior"
+  ],
+  [
+   "shock",
+   "Mäin Handy! Elo ass e jo bal opgelueden!",
+   "Mein Handy! Jetzt ist es ja fast aufgeladen!",
+   "r:student,r:commuter"
+  ],
+  [
+   "shock",
+   "Aua! Dat huet geziwwelt!",
+   "Au! Das hat gezwickt!",
+   "",
+   "startle4"
+  ],
+  [
+   "shock",
+   "Meng Hoer stinn op!",
+   "Meine Haare stehen hoch!",
+   "",
+   "startle5"
+  ],
+  [
+   "reshock",
+   "Du schonn erëm?!",
+   "Du schon wieder?!",
+   ""
+  ],
+  [
+   "reshock",
+   "Net nach eng Kéier, wann ech gelift!",
+   "Nicht noch einmal, bitte!",
+   ""
+  ],
+  [
+   "reshock",
+   "Ech hunn dech am Bléck, Klengen.",
+   "Ich habe dich im Blick, Kleiner.",
+   "p:grummeleg"
+  ],
+  [
+   "reshock",
+   "Hihi, du hues mech gär, oder?",
+   "Hihi, du magst mich, oder?",
+   "p:sonneg"
+  ],
+  [
+   "reshock",
+   "Ech mierken et mer ... an ech vergiessen näischt.",
+   "Ich merke es mir ... und ich vergesse nichts.",
+   "p:grummeleg,r:senior"
+  ],
+  [
+   "bye",
+   "Äddi!",
+   "Tschüss!",
+   "",
+   "bye1"
+  ],
+  [
+   "bye",
+   "Bis geschwënn!",
+   "Bis bald!",
+   "",
+   "bye2"
+  ],
+  [
+   "bye",
+   "Schéinen Dag nach!",
+   "Schönen Tag noch!",
+   "t:moien,t:metteg",
+   "bye3"
+  ],
+  [
+   "bye",
+   "Gutt Nuecht, Léiwchen!",
+   "Gute Nacht, Löwchen!",
+   "t:nuecht"
+  ],
+  [
+   "bye",
+   "Pass op dech op!",
+   "Pass auf dich auf!",
+   "p:sonneg,r:senior"
+  ],
+  [
+   "bye",
+   "Bis den nächste Kéier am Minett!",
+   "Bis zum nächsten Mal im Minett!",
+   ""
+  ],
+  [
+   "bye",
+   "Mmh. Äddi.",
+   "Mmh. Tschüss.",
+   "p:grummeleg,p:schei"
+  ],
+  [
+   "wary",
+   "Oh nee, do ass dee Rowdy-Léiw!",
+   "Oh nein, da ist der Rowdy-Löwe!",
+   ""
+  ],
+  [
+   "wary",
+   "Pass op, dat ass deen, deen d'Autoe klaut!",
+   "Pass auf, das ist der, der die Autos klaut!",
+   ""
+  ],
+  [
+   "wary",
+   "Ech halen Ofstand. Just fir sécher.",
+   "Ich halte Abstand. Nur zur Sicherheit.",
+   "p:schei,p:grummeleg"
+  ],
+  [
+   "wary",
+   "Hmpf. Benimm dech, Klengen!",
+   "Hmpf. Benimm dich, Kleiner!",
+   "r:senior"
+  ],
+  [
+   "wary",
+   "Mama, de béise Léiw!",
+   "Mama, der böse Löwe!",
+   "r:kid"
+  ],
+  [
+   "hero",
+   "Do ass de Held vu Belval!",
+   "Da ist der Held von Belval!",
+   ""
+  ],
+  [
+   "hero",
+   "Merci fir alles, wat s du fir d'Leit hei méchs!",
+   "Danke für alles, was du für die Leute hier tust!",
+   ""
+  ],
+  [
+   "hero",
+   "Kann ech en Autogramm kréien? ... Eng Patt?",
+   "Kann ich ein Autogramm bekommen? ... Einen Pfotenabdruck?",
+   "r:kid"
+  ],
+  [
+   "hero",
+   "Mäi Bopa seet, du bréngs d'Héichiewe erëm zum Liichten!",
+   "Mein Opa sagt, du bringst die Hochöfen wieder zum Leuchten!",
+   ""
+  ],
+  [
+   "hero",
+   "Wann s du do bass, fillt sech Belval méi sécher un.",
+   "Wenn du da bist, fühlt sich Belval sicherer an.",
+   "r:senior,p:schei"
+  ]
+ ],
+ "intro": {
+  "sonneg": [
+   [
+    "Moien! Ech sinn {name}. An du bass bestëmmt dee Blëtz-Léiw, vun deem jidderee schwätzt!",
+    "Hallo! Ich bin {name}. Und du bist bestimmt der Blitz-Löwe, von dem alle reden!"
+   ]
+  ],
+  "grummeleg": [
+   [
+    "Wat ass? ... {name}. Dat ass mäin Numm. Zefridden?",
+    "Was ist? ... {name}. Das ist mein Name. Zufrieden?"
+   ]
+  ],
+  "schei": [
+   [
+    "Oh ... ech ... ech heeschen {name}. Bass du e richtegen Léiw?",
+    "Oh ... ich ... ich heiße {name}. Bist du ein richtiger Löwe?"
+   ]
+  ],
+  "gespreicheg": [
+   [
+    "Moien, moien! Ech sinn {name}, ech wunnen hei zanter dräi Joer, a mäi Nopesch huet eng Kaz, déi gesäit bal aus wéi du!",
+    "Hallo, hallo! Ich bin {name}, ich wohne hier seit drei Jahren, und mein Nachbar hat eine Katze, die sieht fast aus wie du!"
+   ]
+  ],
+  "dreemeg": [
+   [
+    "Hmm? Oh, Moien. Ech sinn {name}. Ech hunn grad un d'Wolleke geduecht.",
+    "Hmm? Oh, hallo. Ich bin {name}. Ich habe gerade an die Wolken gedacht."
+   ]
+  ],
+  "sportlech": [
+   [
+    "Hee! {name} hei. Wëlls de mat mir lafen? Du bass bestëmmt séier!",
+    "Hey! {name} hier. Willst du mit mir laufen? Du bist bestimmt schnell!"
+   ]
+  ],
+  "nerd": [
+   [
+    "Interessant! E Léiw mat elektrescher Mähn. Ech sinn {name}, ech studéieren hei op der Uni.",
+    "Interessant! Ein Löwe mit elektrischer Mähne. Ich bin {name}, ich studiere hier an der Uni."
+   ]
+  ]
+ },
+ "again": [
+  [
+   "Ah, {hero}! Schéin, dech erëm ze gesinn!",
+   "Ah, {hero}! Schön, dich wiederzusehen!",
+   "p:sonneg,p:gespreicheg,p:sportlech"
+  ],
+  [
+   "Du schonn erëm. ... Mee gutt, ech hunn Zäit.",
+   "Du schon wieder. ... Na gut, ich habe Zeit.",
+   "p:grummeleg"
+  ],
+  [
+   "Oh, du bass et! Ech hu gehofft, datt s du erëm kënns.",
+   "Oh, du bist es! Ich habe gehofft, dass du wiederkommst.",
+   "p:schei,p:dreemeg"
+  ],
+  [
+   "Mäi Liiblingsléiw! Wat mécht d'Blëtz-Geschäft?",
+   "Mein Lieblingslöwe! Was macht das Blitz-Geschäft?",
+   "p:nerd,p:sonneg"
+  ]
+ ],
+ "afterShock": [
+  [
+   "Du! Du hues mech vir geschockt! Meng Hoer sinn nach ëmmer elektresch.",
+   "Du! Du hast mich vorhin geschockt! Meine Haare sind immer noch elektrisch."
+  ],
+  [
+   "Ech schwätzen nëmme mat dir, wann s du deng Blëtzer bei dir hälls.",
+   "Ich rede nur mit dir, wenn du deine Blitze bei dir behältst."
+  ],
+  [
+   "Weess du, datt meng Fingernegel nach ëmmer blénken?",
+   "Weißt du, dass meine Fingernägel immer noch leuchten?"
+  ]
+ ],
+ "choices": {
+  "news": [
+   "Wat gëtt et Neies?",
+   "Was gibt's Neues?"
+  ],
+  "lore": [
+   "Erziel mer eppes iwwer Belval!",
+   "Erzähl mir etwas über Belval!"
+  ],
+  "tip": [
+   "Hues de en Tipp fir mech?",
+   "Hast du einen Tipp für mich?"
+  ],
+  "you": [
+   "Wat méchs du esou?",
+   "Was machst du so?"
+  ],
+  "bye": [
+   "Äddi!",
+   "Tschüss!"
+  ]
+ },
+ "news": [
+  [
+   "Ech hunn héieren, datt an der Rockhal haut eng Band spillt, déi keen kennt. Dat sinn ëmmer déi beschten!",
+   "Ich habe gehört, dass in der Rockhal heute eine Band spielt, die keiner kennt. Das sind immer die besten!"
+  ],
+  [
+   "An der Gare steet en ale Zuch. Et gëtt gesot, e fiert an d'Joer 1900! Komesch, oder?",
+   "Am Bahnhof steht ein alter Zug. Man sagt, er fährt ins Jahr 1900! Seltsam, oder?"
+  ],
+  [
+   "E Kand sicht seng Int. Si soll beim Waasser gesi gi sinn.",
+   "Ein Kind sucht seine Ente. Sie soll am Wasser gesehen worden sein."
+  ],
+  [
+   "D'Stroum fält an der Lescht méi oft aus. Ech mengen, d'Luuchten hätten Honger.",
+   "Der Strom fällt in letzter Zeit öfter aus. Ich glaube, die Lampen haben Hunger."
+  ],
+  [
+   "Op der Plaza gëtt et eng nei Bubble-Tea-Bud. Ech war schonn dräimol do. Haut.",
+   "In der Plaza gibt es einen neuen Bubble-Tea-Laden. Ich war schon dreimal da. Heute."
+  ],
+  [
+   "Meng Kolleegin seet, um Daach vun de Héichiewe gesäit een bis op Frankräich.",
+   "Meine Kollegin sagt, vom Dach der Hochöfen sieht man bis nach Frankreich."
+  ],
+  [
+   "D'Studenten maachen e Concours: wien de Léiw fotograféiert, kritt e Gratis-Kaffi. Pass op dech op!",
+   "Die Studenten machen einen Wettbewerb: Wer den Löwen fotografiert, bekommt einen Gratis-Kaffee. Pass auf dich auf!"
+  ],
+  [
+   "Ech hunn haut den Zuch verpasst. Mee dofir hunn ech e Léiw kennegeléiert. Gudden Tausch!",
+   "Ich habe heute den Zug verpasst. Aber dafür habe ich einen Löwen kennengelernt. Guter Tausch!"
+  ],
+  [
+   "An der Nuecht leeën d'Héichiewe ganz faarweg. Dat muss ee gesinn hunn!",
+   "Nachts leuchten die Hochöfen ganz bunt. Das muss man gesehen haben!"
+  ],
+  [
+   "Et gëtt gesot, e klenge Léiw hätt haut en Auto geklaut. Mee hien hätt en och erëm zréckbruecht!",
+   "Man sagt, ein kleiner Löwe hätte heute ein Auto geklaut. Aber er hätte es auch wieder zurückgebracht!"
+  ]
+ ],
+ "lore": [
+  [
+   "Belval war fréier e grousst Stolwierk. De leschten Ofstéch vum Héichuewen war 1997.",
+   "Belval war früher ein großes Stahlwerk. Der letzte Abstich am Hochofen war 1997."
+  ],
+  [
+   "Den Héichuewen A ka mer haut besichtegen. Uewen op der Plattform huet een eng super Vue.",
+   "Den Hochofen A kann man heute besichtigen. Oben auf der Plattform hat man eine tolle Aussicht."
+  ],
+  [
+   "D'Rockhal ass 2005 opgaangen. Do hu scho ganz grouss Stars gespillt.",
+   "Die Rockhal hat 2005 eröffnet. Da haben schon ganz große Stars gespielt."
+  ],
+  [
+   "D'Uni Lëtzebuerg ass 2015 op Belval geplënnert, an d'Maison du Savoir.",
+   "Die Uni Luxemburg ist 2015 nach Belval umgezogen, in die Maison du Savoir."
+  ],
+  [
+   "De Luxembourg Learning Centre ass an der aler Möllerei. Do gouf fréier d'Äerz gelagert.",
+   "Das Luxembourg Learning Centre ist in der alten Möllerei. Dort wurde früher das Erz gelagert."
+  ],
+  [
+   "Esch war 2022 Europäesch Kulturhaaptstad. Ganz Belval war eng grouss Bühn!",
+   "Esch war 2022 Europäische Kulturhauptstadt. Ganz Belval war eine große Bühne!"
+  ],
+  [
+   "De Minett ass zanter 2020 eng UNESCO-Biosphär. Déi rout Äerd ass eis Geschicht.",
+   "Das Minett ist seit 2020 ein UNESCO-Biosphärenreservat. Die rote Erde ist unsere Geschichte."
+  ],
+  [
+   "De Numm Minett kënnt vum Äerz, der Minette. Doraus gouf hei Eisen gemaach.",
+   "Der Name Minett kommt vom Erz, der Minette. Daraus wurde hier Eisen gemacht."
+  ],
+  [
+   "Fréier hunn hei Leit aus ganz Europa geschafft: Italiener, Portugisen, Lëtzebuerger ... dofir schwätze mir esou vill Sproochen.",
+   "Früher haben hier Leute aus ganz Europa gearbeitet: Italiener, Portugiesen, Luxemburger ... deshalb sprechen wir so viele Sprachen."
+  ]
+ ],
+ "tips": [
+  [
+   "Wann s du keng Ladung méi hues: stell dech bei eng Luucht. Do kanns du dech oplueden.",
+   "Wenn du keine Ladung mehr hast: Stell dich zu einer Laterne. Da kannst du dich aufladen."
+  ],
+  [
+   "Mam Donner erschreckt een déi ganz Plaz. Maach dat léiwer net, wann vill Leit do sinn!",
+   "Mit dem Donner erschreckt man den ganzen Platz. Mach das lieber nicht, wenn viele Leute da sind!"
+  ],
+  [
+   "Mam Dash bass du bal méi séier wéi den Zuch.",
+   "Mit dem Dash bist du fast schneller als der Zug."
+  ],
+  [
+   "Kuck op d'Kaart. Do gesäis du all d'Missiounen a wou s du hi muss.",
+   "Schau auf die Karte. Da siehst du alle Missionen und wo du hin musst."
+  ],
+  [
+   "Zweemol sprangen, a gläich nach eng Kéier! Domat kënns du op vill Diech.",
+   "Zweimal springen, und gleich nochmal! Damit kommst du auf viele Dächer."
+  ],
+  [
+   "An de Geschäfter kanns du eppes kafen. Gromperekichelcher ginn Energie!",
+   "In den Geschäften kannst du etwas kaufen. Kartoffelpuffer geben Energie!"
+  ],
+  [
+   "Schwätz mat de Leit. Jidderee weess eppes anescht!",
+   "Sprich mit den Leuten. Jeder weiß etwas anderes!"
+  ],
+  [
+   "Mat E kanns du en Auto iwwerhuelen. Mee d'Besëtzer freeën sech net! Bréng en zréck, da kriss du Häerzer.",
+   "Mit E kannst du ein Auto übernehmen. Aber die Besitzer freuen sich nicht! Bring es zurück, dann bekommst du Herzen."
+  ],
+  [
+   "Iwwerall leien al Fonken vum Héichuewen. Sammel se all!",
+   "Überall liegen alte Funken vom Hochofen. Sammle sie alle!"
+  ]
+ ],
+ "you": {
+  "student": [
+   [
+    "Ech studéieren Informatik. Oder Biologie. Ech hunn nach net decidéiert.",
+    "Ich studiere Informatik. Oder Biologie. Ich habe mich noch nicht entschieden."
+   ]
+  ],
+  "commuter": [
+   [
+    "Ech pendele all Dag. Zuch, Bus, Zuch. Mäi Liewen ass e Fahrplang.",
+    "Ich pendle jeden Tag. Zug, Bus, Zug. Mein Leben ist ein Fahrplan."
+   ]
+  ],
+  "family": [
+   [
+    "Ech sinn mat de Kanner ënnerwee. Si wëllen ëmmer nëmmen op d'Spillplaz.",
+    "Ich bin mit den Kindern unterwegs. Sie wollen immer nur auf den Spielplatz."
+   ]
+  ],
+  "senior": [
+   [
+    "Ech sinn a Pensioun. Ech kucken, wéi Belval wiisst. Wéi e Gaart aus Eisen.",
+    "Ich bin in Rente. Ich schaue, wie Belval wächst. Wie ein Garten aus Eisen."
+   ]
+  ],
+  "worker": [
+   [
+    "Ech sinn um Bau. Déi Haiser hei hunn ech mat opgebaut!",
+    "Ich bin auf dem Bau. Diese Häuser hier habe ich mit aufgebaut!"
+   ]
+  ],
+  "jogger": [
+   [
+    "Lafen! Moies, mëttes, owes. Ech trainéieren fir de Marathon.",
+    "Laufen! Morgens, mittags, abends. Ich trainiere für den Marathon."
+   ]
+  ],
+  "tourist": [
+   [
+    "Ech sinn op Visite. D'Héichiewe sinn nach méi grouss wéi op de Fotoen!",
+    "Ich bin zu Besuch. Die Hochöfen sind noch größer als auf den Fotos!"
+   ]
+  ],
+  "musician": [
+   [
+    "Ech spillen Gittar an enger Band. Mir sichen nach e Schlagzeier. Kanns du trommelen?",
+    "Ich spiele Gitarre in einer Band. Wir suchen noch einen Schlagzeuger. Kannst du trommeln?"
+   ]
+  ],
+  "casual": [
+   [
+    "Ach, ech genéissen einfach den Dag. Dat ass och eng Aarbecht!",
+    "Ach, ich genieße einfach den Tag. Das ist auch eine Arbeit!"
+   ]
+  ],
+  "kid": [
+   [
+    "Ech ginn an d'Spillschoul! An ech kann schonn bis honnert zielen! ... Bal.",
+    "Ich gehe in den Kindergarten! Und ich kann schon bis hundert zählen! ... Fast."
+   ]
+  ]
+ },
+ "friend": [
+  [
+   "Du bass e richtege Frënd, {hero}.",
+   "Du bist ein richtiger Freund, {hero}."
+  ],
+  [
+   "Mat dir ass Belval vill méi lëschteg!",
+   "Mit dir ist Belval viel lustiger!"
+  ]
+ ],
+ "convos": [
+  [
+   [
+    "Hues du d'Aufgab fir muer?",
+    "Hast du die Aufgabe für morgen?"
+   ],
+   [
+    "Wéi eng Aufgab?",
+    "Welche Aufgabe?"
+   ],
+   [
+    "... Oh nee.",
+    "... Oh nein."
+   ]
+  ],
+  [
+   [
+    "Gromperekichelcher oder Bouneschlupp?",
+    "Kartoffelpuffer oder Bohnensuppe?"
+   ],
+   [
+    "Firwat net béid?",
+    "Warum nicht beides?"
+   ],
+   [
+    "Du bass e Genie.",
+    "Du bist ein Genie."
+   ]
+  ],
+  [
+   [
+    "Kuck, do ass de Blëtz-Léiw!",
+    "Schau, da ist der Blitz-Löwe!"
+   ],
+   [
+    "Wou? ... Oh! Hien ass jo kleng!",
+    "Wo? ... Oh! Der ist ja klein!"
+   ],
+   [
+    "Kleng, awer geféierlech!",
+    "Klein, aber gefährlich!"
+   ]
+  ],
+  [
+   [
+    "De Bus ass erëm fort.",
+    "Der Bus ist wieder weg."
+   ],
+   [
+    "Da gi mer ze Fouss.",
+    "Dann gehen wir zu Fuß."
+   ],
+   [
+    "Bis op Esch?!",
+    "Bis nach Esch?!"
+   ],
+   [
+    "Ass gutt fir d'Gesondheet.",
+    "Ist gut für die Gesundheit."
+   ]
+  ],
+  [
+   [
+    "Ech hunn eng nei Pläng: ech ginn Astronaut.",
+    "Ich habe einen neuen Plan: Ich werde Astronaut."
+   ],
+   [
+    "Lëtzebuerg huet jo eng Weltraumagence.",
+    "Luxemburg hat ja eine Weltraumagentur."
+   ],
+   [
+    "Gesäis de! Et ass Schicksal.",
+    "Siehst du! Es ist Schicksal."
+   ]
+  ],
+  [
+   [
+    "Gëschter war ech an der Rockhal.",
+    "Gestern war ich in der Rockhal."
+   ],
+   [
+    "A? Wéi war et?",
+    "Und? Wie war es?"
+   ],
+   [
+    "Haut héieren ech nach ëmmer näischt.",
+    "Heute höre ich immer noch nichts."
+   ],
+   [
+    "Wat?",
+    "Was?"
+   ]
+  ],
+  [
+   [
+    "Mäi Bopa sot ëmmer: Eisen ass Liewen.",
+    "Mein Opa sagte immer: Eisen ist Leben."
+   ],
+   [
+    "A mäi Bopa sot: Kaffi ass Liewen.",
+    "Und mein Opa sagte: Kaffee ist Leben."
+   ],
+   [
+    "Béid haten Recht.",
+    "Beide hatten recht."
+   ]
+  ],
+  [
+   [
+    "Gesäis du och dës Wolleken? Déi do gesäit aus wéi en Draach.",
+    "Siehst du auch diese Wolken? Die da sieht aus wie ein Drache."
+   ],
+   [
+    "Dat ass e Kran.",
+    "Das ist ein Kran."
+   ],
+   [
+    "... E Kran-Draach.",
+    "... Ein Kran-Drache."
+   ]
+  ],
+  [
+   [
+    "Mir solle méi Sport maachen.",
+    "Wir sollten mehr Sport machen."
+   ],
+   [
+    "Muer.",
+    "Morgen."
+   ],
+   [
+    "Dat sees du all Dag.",
+    "Das sagst du jeden Tag."
+   ],
+   [
+    "An all Dag ass et wouer.",
+    "Und jeden Tag stimmt es."
+   ]
+  ],
+  [
+   [
+    "Papp, kann ech e Léiw kréien?",
+    "Papa, kann ich einen Löwen haben?"
+   ],
+   [
+    "Mir hunn net emol Plaz fir e Goldfësch.",
+    "Wir haben nicht mal Platz für einen Goldfisch."
+   ],
+   [
+    "En ganz klengen?",
+    "Einen ganz kleinen?"
+   ]
+  ],
+  [
+   [
+    "Wéi seet een 'Danke' op Lëtzebuergesch?",
+    "Wie sagt man 'Danke' auf Luxemburgisch?"
+   ],
+   [
+    "Merci!",
+    "Merci!"
+   ],
+   [
+    "Dat ass jo Franséisch!",
+    "Das ist ja Französisch!"
+   ],
+   [
+    "Wëllkomm zu Lëtzebuerg.",
+    "Willkommen in Luxemburg."
+   ]
+  ],
+  [
+   [
+    "Ech hunn haut mäi Velo gesicht.",
+    "Ich habe heute mein Fahrrad gesucht."
+   ],
+   [
+    "An?",
+    "Und?"
+   ],
+   [
+    "Hien stoung virun der Dier. Wou ech en ëmmer stellen.",
+    "Es stand vor der Tür. Wo ich es immer abstelle."
+   ]
+  ],
+  [
+   [
+    "D'Héichiewe gesinn haut esou rout aus.",
+    "Die Hochöfen sehen heute so rot aus."
+   ],
+   [
+    "Dat ass de Rascht. A meng Erënnerungen.",
+    "Das ist der Rost. Und meine Erinnerungen."
+   ]
+  ],
+  [
+   [
+    "Si mer ze spéit fir den Zuch?",
+    "Sind wir zu spät für den Zug?"
+   ],
+   [
+    "Mir sinn ni ze spéit. Den Zuch ass ëmmer méi spéit.",
+    "Wir sind nie zu spät. Der Zug ist immer später."
+   ]
+  ]
+ ]
+}

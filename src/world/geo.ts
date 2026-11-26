@@ -1,0 +1,26 @@
+import { Mesh, VertexData, type Material, type Scene } from '@babylonjs/core';
+
+/** Sammelt Dreiecke und erzeugt daraus ein einziges Mesh (wenige Zeichenaufrufe = schnell). */
+export class GeoBuilder {
+  pos: number[] = []; nor: number[] = []; uv: number[] = []; idx: number[] = [];
+  get count() { return this.pos.length / 3; }
+  vert(x: number, y: number, z: number, nx: number, ny: number, nz: number, u: number, v: number) {
+    this.pos.push(x, y, z); this.nor.push(nx, ny, nz); this.uv.push(u, v); return this.count - 1;
+  }
+  // Rechtshändiges System: Vorderseite = Uhrzeigersinn aus Babylon-Sicht → Reihenfolge a,c,b
+  tri(a: number, b: number, c: number) { this.idx.push(a, c, b); }
+  /** Viereck a-b-c-d (gegen den Uhrzeigersinn von außen gesehen) mit flacher Normale */
+  quad(p: number[][], uv: number[][]) {
+    const [a, b, c] = p, ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const L = Math.hypot(nx, ny, nz) || 1; nx /= L; ny /= L; nz /= L;
+    const i = p.map((q, k) => this.vert(q[0], q[1], q[2], nx, ny, nz, uv[k][0], uv[k][1]));
+    this.tri(i[0], i[1], i[2]); this.tri(i[0], i[2], i[3]);
+  }
+  build(name: string, scene: Scene, mat: Material, opts: { normals?: boolean } = {}): Mesh | null {
+    if (!this.idx.length) return null;
+    const vd = new VertexData(); vd.positions = this.pos; vd.indices = this.idx; vd.uvs = this.uv;
+    if (opts.normals) { const n: number[] = []; VertexData.ComputeNormals(this.pos, this.idx, n); vd.normals = n; } else vd.normals = this.nor;
+    const m = new Mesh(name, scene); vd.applyToMesh(m, false); m.material = mat; m.freezeWorldMatrix(); m.isPickable = false;
+    return m;
+  }
+}
