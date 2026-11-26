@@ -32,6 +32,24 @@ export class Player {
   private cur = '';
   private play(n: string, speedRatio = 1) { const g = this.anims[n]; if (!g) return; if (this.cur !== n) { for (const a of Object.values(this.anims)) a.stop(); g.start(true, speedRatio); this.cur = n; } else g.speedRatio = speedRatio; }
   get position() { return this.ctrl.getPosition(); }
+  get forward() { return new Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw)); }
+  /** Blëtz steigt ein (Modell aus) oder aus (an Position pos) */
+  setDriving(on: boolean, pos?: Vector3) {
+    this.root.setEnabled(!on);
+    if (pos) { this.ctrl.setPosition(pos); this.ctrl.setVelocity(Vector3.Zero()); this.speed = 0; }
+  }
+  /** Kamera hinter dem Auto */
+  followCar(dt: number, pos: Vector3, yaw: number, speed: number, input: Input) {
+    this.ctrl.setPosition(pos.add(new Vector3(0, 1.2, 0))); this.ctrl.setVelocity(Vector3.Zero());
+    this.camPitch = Math.max(-0.2, Math.min(1.0, this.camPitch + input.look.y * 0.003));
+    if (Math.abs(input.look.x) > 0.5) this.free = 1.6; this.free -= dt;
+    this.camYaw -= input.look.x * 0.004;
+    if (this.free <= 0) { let d = yaw + Math.PI - this.camYaw; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; this.camYaw += d * Math.min(1, dt * 3); this.camPitch += (0.22 - this.camPitch) * Math.min(1, dt * 2); }
+    const dist = this.camDist; this.camDist = 7.5 + Math.abs(speed) * 0.08; this.updateCamera(dt, pos.add(new Vector3(0, 0.6, 0))); this.camDist = dist;
+  }
+  private free = 0;
+  /** kurzer Stoß nach hinten (z. B. vom Auto erwischt) */
+  bump(v: Vector3) { this.ctrl.setVelocity(v); }
 
   update(dt: number, input: Input) {
     if (dt <= 0) return;
