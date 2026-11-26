@@ -16,6 +16,11 @@ export class GeoBuilder {
     const i = p.map((q, k) => this.vert(q[0], q[1], q[2], nx, ny, nz, uv[k][0], uv[k][1]));
     this.tri(i[0], i[1], i[2]); this.tri(i[0], i[2], i[3]);
   }
+  /** Viereck, dessen sichtbare Seite nach oben zeigt (Straßen, Gehwege, Markierungen) */
+  quadUp(p: number[][], uv: number[][]) {
+    const [a, b, c] = p, ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
+    if (ny >= 0) this.quad(p, uv); else this.quad([p[1], p[0], p[3], p[2]], [uv[1], uv[0], uv[3], uv[2]]);
+  }
   build(name: string, scene: Scene, mat: Material, opts: { normals?: boolean } = {}): Mesh | null {
     if (!this.idx.length) return null;
     const vd = new VertexData(); vd.positions = this.pos; vd.indices = this.idx; vd.uvs = this.uv;

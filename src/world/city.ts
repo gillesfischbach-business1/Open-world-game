@@ -20,7 +20,7 @@ export function buildRoads(w: WorldData, scene: Scene, mats: Materials, height: 
       const [ax, az, ao] = pts[k], [bx, bz, bo] = pts[k + 1], L = Math.hypot(bx - ax, bz - az); if (L < 0.01) continue;
       const nx = -(bz - az) / L, nz = (bx - ax) / L;
       const ya = height(ax, az) + ao + 0.06, yb = height(bx, bz) + bo + 0.06;
-      const strip = (g: GeoBuilder, o0: number, o1: number, dy: number) => g.quad(
+      const strip = (g: GeoBuilder, o0: number, o1: number, dy: number) => g.quadUp(
         [[ax + nx * o0, ya + dy, az + nz * o0], [bx + nx * o0, yb + dy, bz + nz * o0], [bx + nx * o1, yb + dy, bz + nz * o1], [ax + nx * o1, ya + dy, az + nz * o1]],
         [[o0, acc], [o0, acc + L], [o1, acc + L], [o1, acc]]);
       strip(road, -hw, hw, 0);
@@ -28,7 +28,7 @@ export function buildRoads(w: WorldData, scene: Scene, mats: Materials, height: 
       // Mittellinie gestrichelt (3 m Strich, 6 m Lücke)
       if (r.ln >= 1 && !r.ow) for (let s = 0; s < L; s += 9) { const s1 = Math.min(L, s + 3), f0 = s / L, f1 = s1 / L, w2 = 0.07;
         const p0 = [ax + (bx - ax) * f0, ya + (yb - ya) * f0 + 0.01, az + (bz - az) * f0], p1 = [ax + (bx - ax) * f1, ya + (yb - ya) * f1 + 0.01, az + (bz - az) * f1];
-        line.quad([[p0[0] - nx * w2, p0[1], p0[2] - nz * w2], [p1[0] - nx * w2, p1[1], p1[2] - nz * w2], [p1[0] + nx * w2, p1[1], p1[2] + nz * w2], [p0[0] + nx * w2, p0[1], p0[2] + nz * w2]], [[0, 0], [0, 1], [1, 1], [1, 0]]); }
+        line.quadUp([[p0[0] - nx * w2, p0[1], p0[2] - nz * w2], [p1[0] - nx * w2, p1[1], p1[2] - nz * w2], [p1[0] + nx * w2, p1[1], p1[2] + nz * w2], [p0[0] + nx * w2, p0[1], p0[2] + nz * w2]], [[0, 0], [0, 1], [1, 1], [1, 0]]); }
       acc += L;
     }
   }

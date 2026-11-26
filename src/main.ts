@@ -155,7 +155,7 @@ async function main() {
       if (hud.talking) closeTalk();
       else if (car) { if (Math.abs(car.speed) < 5) exitCar(); else say(['Bremms fir d\'éischt!', 'Erst bremsen!']); }
       else if (talkCool <= 0) {
-        const pos = player.position, p = people.nearest(pos, 2.8), c = traffic.nearest(pos, 3.6);
+        const pos = player.position, p = people.nearest(pos, 2.8), c = traffic.nearest(pos, 4.5);
         if (p && (!c || Vector3.Distance(p.pos, pos) < Vector3.Distance(c.pos, pos))) openTalk(p); else if (c) enterCar(c);
       }
     }
@@ -187,7 +187,7 @@ async function main() {
     let prompt = '';
     if (!hud.talking) {
       if (car) prompt = Math.abs(car.speed) < 5 ? 'E · Ausstiegen' : '';
-      else { const p = people.nearest(pos, 2.8), c = traffic.nearest(pos, 3.6); if (p) prompt = `E · Mat ${p.who.name} schwätzen`; else if (c) prompt = c.kind === 'police' ? 'E · Policeauto huelen' : 'E · Asteigen'; }
+      else { const p = people.nearest(pos, 2.8), c = traffic.nearest(pos, 4.5); if (p) prompt = `E · Mat ${p.who.name} schwätzen`; else if (c) prompt = c.kind === 'police' ? 'E · Policeauto huelen' : 'E · Asteigen'; }
     }
     hud.setPrompt(prompt);
     const mv = missions.update({ stats: missions.stats, pos, inCar: !!car, heat: heat() }, height);
