@@ -44,7 +44,7 @@ export class People {
   /** Menschen rund um (x, z) verteilen */
   spawn(x: number, z: number) {
     for (let i = 0; i < this.count; i++) {
-      const at = this.net.pick(x, z, 6, 160, this.r, p => p.walk); if (!at) continue;
+      const at = this.net.pick(x, z, 4, 150, this.r, p => p.walk); if (!at) continue;
       const female = this.r() < 0.5, tpl = this.templates[female ? 0 : 1], c = tpl[Math.floor(this.r() * tpl.length)];
       const inst = c.instantiateModelsToScene(n => n, false, { doNotInstantiate: true });
       const root = inst.rootNodes[0] as TransformNode; root.scaling.setAll(SCALE);
@@ -52,11 +52,12 @@ export class People {
       for (const g of inst.animationGroups) { if (KEEP.has(g.name)) { g.stop(); anims[g.name] = g; } else g.dispose(); }
       const meshes = root.getChildMeshes(false); for (const m of meshes) { m.isPickable = false; m.receiveShadows = true; m.alwaysSelectAsActiveMesh = false; }
       const who: Who = { name: this.dlg.name(female, this.r()), pers: this.dlg.persOf(this.r()), role: this.dlg.roleOf(this.r()) };
-      const p = new Person(who, female, root, meshes, anims, at[0], at[1], this.r() < 0.5 ? 1 : -1, (at[0].hw + 1.2) * (this.r() < 0.5 ? 1 : -1));
+      const p = new Person(who, female, root, meshes, anims, at[0], at[1], this.r() < 0.5 ? 1 : -1, this.sideFor(at[0]));
       p.speed = 1.1 + this.r() * 0.5; this.place(p, 1); this.list.push(p);
     }
   }
 
+  private sideFor(q: Path) { return q.foot ? (this.r() - 0.5) * 0.8 : (q.hw + 1.2) * (this.r() < 0.5 ? 1 : -1); }
   private place(p: Person, dt: number) {
     const q = this.net.sample(p.path, p.s, p.dir, p.side * p.dir, this.smp);
     p.pos.set(q.x, q.y + 0.12, q.z);
@@ -69,7 +70,7 @@ export class People {
     p.s += p.dir * v * dt;
     if (p.s < 0 || p.s > p.path.len) {
       const [q, dir, s] = this.net.next(p.path, p.dir, this.r(), x => x.walk, false);
-      p.path = q; p.dir = dir; p.s = s; p.side = (Math.sign(p.side) || 1) * (q.hw + 1.2);
+      p.path = q; p.dir = dir; p.s = s; p.side = q.foot ? (this.r() - 0.5) * 0.8 : (Math.sign(p.side) || 1) * (q.hw + 1.2);
     }
     this.place(p, dt);
   }
@@ -115,7 +116,7 @@ export class People {
     for (const p of this.list) {
       const d = Vector3.Distance(p.pos, player);
       // weit weg: an neuen Ort in der Nähe versetzen
-      if (d > 230) { const at = this.net.pick(player.x, player.z, 90, 180, this.r, q => q.walk); if (at) { p.path = at[0]; p.s = at[1]; p.side = (at[0].hw + 1.2) * (this.r() < 0.5 ? 1 : -1); p.state = 'walk'; p.partner = null; this.place(p, 1); } }
+      if (d > 230) { const at = this.net.pick(player.x, player.z, 90, 180, this.r, q => q.walk); if (at) { p.path = at[0]; p.s = at[1]; p.side = this.sideFor(at[0]); p.state = 'walk'; p.partner = null; this.place(p, 1); } }
       const vis = d < 150; p.setVisible(vis); if (!vis) continue;
       p.t -= dt; p.bark -= dt;
       switch (p.state) {

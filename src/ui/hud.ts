@@ -65,7 +65,7 @@ export class Hud {
     const tx = (x: number) => (x - p.x) * sc, tz = (z: number) => (z - p.z) * sc;
     c.strokeStyle = 'rgba(235,235,225,.55)'; c.lineCap = 'round';
     for (const q of this.net.paths) {
-      const n = q.x.length; if (Math.abs(q.x[0] - p.x) > 400 && Math.abs(q.x[n - 1] - p.x) > 400) continue;
+      if (q.foot) continue; const n = q.x.length; if (Math.abs(q.x[0] - p.x) > 400 && Math.abs(q.x[n - 1] - p.x) > 400) continue;
       c.lineWidth = Math.max(1.5, q.hw * 2 * sc); c.beginPath();
       for (let i = 0; i < n; i++) { const X = tx(q.x[i]), Z = tz(q.z[i]); if (i) c.lineTo(X, Z); else c.moveTo(X, Z); }
       c.stroke();

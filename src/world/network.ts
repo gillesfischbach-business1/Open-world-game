@@ -5,7 +5,7 @@ type H = (x: number, z: number) => number;
 /** Ein befahrbarer/begehbarer Weg (eine OSM-Straße) mit Punkten inkl. Höhe und Längen. */
 export interface Path {
   id: number; x: Float32Array; y: Float32Array; z: Float32Array; s: Float32Array; len: number;
-  hw: number; oneway: boolean; walk: boolean; vmax: number;
+  hw: number; oneway: boolean; walk: boolean; drive: boolean; foot: boolean; vmax: number;
   /** angrenzende Wege an Anfang (0) und Ende (1): [Weg, beginnt dort?] */
   link: [Array<[number, boolean]>, Array<[number, boolean]>];
 }
@@ -24,7 +24,20 @@ export class Network {
       const x = new Float32Array(n), y = new Float32Array(n), z = new Float32Array(n), s = new Float32Array(n);
       for (let i = 0; i < n; i++) { x[i] = r.p[i * 3]; z[i] = r.p[i * 3 + 1]; y[i] = height(x[i], z[i]) + (r.p[i * 3 + 2] || 0) + 0.06; if (i) s[i] = s[i - 1] + Math.hypot(x[i] - x[i - 1], z[i] - z[i - 1]); }
       if (s[n - 1] < 8) continue;
-      this.paths.push({ id: this.paths.length, x, y, z, s, len: s[n - 1], hw: Math.max(2.2, r.hw), oneway: !!r.ow, walk: r.t !== 'n' && r.t !== 'p', vmax: Math.min(r.vmax || 50, 70), link: [[], []] });
+      this.paths.push({ id: this.paths.length, x, y, z, s, len: s[n - 1], hw: Math.max(2.2, r.hw), oneway: !!r.ow, walk: true, drive: true, foot: false, vmax: Math.min(r.vmax || 50, 70), link: [[], []] });
+    }
+    // Fußwege (nur für Fußgänger, mittig begehbar); lange Abschnitte in 3-m-Schritte teilen
+    for (const [, f] of w.PA) {
+      const raw: number[][] = [];
+      for (let i = 0; i + 1 < f.length; i += 2) {
+        if (raw.length) { const [px, pz] = raw[raw.length - 1], L = Math.hypot(f[i] - px, f[i + 1] - pz), k = Math.floor(L / 3); for (let j = 1; j < k; j++) raw.push([px + (f[i] - px) * j / k, pz + (f[i + 1] - pz) * j / k]); }
+        raw.push([f[i], f[i + 1]]);
+      }
+      const n = raw.length; if (n < 2) continue;
+      const x = new Float32Array(n), y = new Float32Array(n), z = new Float32Array(n), s = new Float32Array(n);
+      for (let i = 0; i < n; i++) { x[i] = raw[i][0]; z[i] = raw[i][1]; y[i] = height(x[i], z[i]) + 0.05; if (i) s[i] = s[i - 1] + Math.hypot(x[i] - x[i - 1], z[i] - z[i - 1]); }
+      if (s[n - 1] < 6) continue;
+      this.paths.push({ id: this.paths.length, x, y, z, s, len: s[n - 1], hw: 0, oneway: false, walk: true, drive: false, foot: true, vmax: 0, link: [[], []] });
     }
     // Endpunkte verknüpfen (einfaches Raster für schnelle Suche)
     const ends: Array<{ p: number; e: 0 | 1; x: number; z: number }> = [];

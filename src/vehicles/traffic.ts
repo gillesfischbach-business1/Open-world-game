@@ -53,12 +53,12 @@ export class Traffic {
   private pickModel() { const tot = CIVIL.reduce((a, c) => a + c[1], 0); let x = this.r() * tot; for (const [n, w] of CIVIL) if ((x -= w) <= 0) return n; return 'sedan'; }
   private lane(c: Car) { return c.path.oneway ? 0 : c.path.hw * 0.48; }
   private putOnRoad(c: Car, px: number, pz: number, r0: number, r1: number) {
-    const at = this.net.pick(px, pz, r0, r1, this.r, () => true); if (!at) return false;
+    const at = this.net.pick(px, pz, r0, r1, this.r, q => q.drive); if (!at) return false;
     c.path = at[0]; c.s = at[1]; c.dir = c.path.oneway || this.r() < 0.5 ? 1 : -1; c.speed = 6; c.stalled = 0;
     const q = this.net.sample(c.path, c.s, c.dir, this.lane(c), this.smp); c.pos.set(q.x, q.y, q.z); c.yaw = Math.atan2(q.dx, q.dz); return true;
   }
   spawn(x: number, z: number) {
-    for (let i = 0; i < this.count; i++) { const c = this.make(this.pickModel()); if (!this.putOnRoad(c, x, z, 20, 350)) { c.root.dispose(); continue; } c.sync(0); this.cars.push(c); }
+    for (let i = 0; i < this.count; i++) { const c = this.make(this.pickModel()); if (!this.putOnRoad(c, x, z, 12, 260)) { c.root.dispose(); continue; } c.sync(0); this.cars.push(c); }
   }
   nearest(pos: Vector3, max: number): Car | null {
     let best: Car | null = null, bd = max;
@@ -127,7 +127,7 @@ export class Traffic {
       c.stalled -= dt;
       c.speed += Math.max(-10 * dt, Math.min(3.5 * dt, target - c.speed));
       c.s += c.dir * c.speed * dt;
-      if (c.s < 0 || c.s > c.path.len) { const [q, dir, s] = this.net.next(c.path, c.dir, this.r(), () => true, true); c.path = q; c.dir = dir; c.s = s; }
+      if (c.s < 0 || c.s > c.path.len) { const [q, dir, s] = this.net.next(c.path, c.dir, this.r(), q => q.drive, true); c.path = q; c.dir = dir; c.s = s; }
       const q = this.net.sample(c.path, c.s, c.dir, this.lane(c), this.smp);
       c.pos.set(q.x, q.y, q.z);
       let d = Math.atan2(q.dx, q.dz) - c.yaw; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
