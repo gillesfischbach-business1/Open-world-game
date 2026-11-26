@@ -10,3 +10,7 @@
 | Luxemburgische Stimmen | denZLS/luxembourgish-male/female-vits-tts (Zenter fir d'Lëtzebuerger Sprooch, LOD-Daten) | CC BY-NC 4.0 |
 | Engine | Babylon.js | Apache 2.0 |
 | Physik | Havok für Babylon.js | MIT |
+
+## Figuren und Fahrzeuge
+- **Kenney – Mini Characters** (13 Menschen mit Animationen: stehen, gehen, rennen, fahren, umfallen …) – CC0, www.kenney.nl
+- **Kenney – Car Kit 3.1** (13 Fahrzeuge inkl. Polizei, Taxi, Bus-ähnliche Lieferwagen, mit getrennten Rädern) – CC0, www.kenney.nl
