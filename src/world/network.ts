@@ -59,11 +59,12 @@ export class Network {
   }
   /** zufälliger Punkt auf einem Weg im Abstand [r0, r1] um (x, z) */
   pick(x: number, z: number, r0: number, r1: number, rnd: () => number, filter: (q: Path) => boolean): [Path, number] | null {
-    for (let t = 0; t < 60; t++) {
-      const p = this.paths[Math.floor(rnd() * this.paths.length)]; if (!filter(p)) continue;
-      const i = Math.floor(rnd() * p.x.length), d = Math.hypot(p.x[i] - x, p.z[i] - z);
-      if (d >= r0 && d <= r1) return [p, p.s[i]];
+    // alle Wegpunkte im Ring sammeln, dann zufällig wählen (nach Weglänge gewichtet durch Punktdichte)
+    const cand: Array<[Path, number]> = [];
+    for (const p of this.paths) {
+      if (!filter(p)) continue;
+      for (let i = 0; i < p.x.length; i++) { const d = Math.hypot(p.x[i] - x, p.z[i] - z); if (d >= r0 && d <= r1) cand.push([p, p.s[i]]); }
     }
-    return null;
+    return cand.length ? cand[Math.floor(rnd() * cand.length)] : null;
   }
 }
