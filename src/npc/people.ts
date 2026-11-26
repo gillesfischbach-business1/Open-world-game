@@ -78,7 +78,7 @@ export class People {
   /** nächster ansprechbarer Mensch */
   nearest(pos: Vector3, max: number): Person | null {
     let best: Person | null = null, bd = max;
-    for (const p of this.list) { if (!p.root.isEnabled() || p.state === 'down') continue; const d = Vector3.Distance(pos, p.pos); if (d < bd) { bd = d; best = p; } }
+    for (const p of this.list) { if (!p.root.isEnabled() || p.state === 'down') continue; const d = Math.hypot(pos.x - p.pos.x, pos.z - p.pos.z); if (d < bd && Math.abs(pos.y - p.pos.y) < 3) { bd = d; best = p; } }
     return best;
   }
 
