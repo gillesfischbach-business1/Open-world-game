@@ -1,5 +1,5 @@
 import {
-  SceneLoader, AnimationGroup, Animation, PBRMaterial, Texture, Material, Vector3, Quaternion, type AssetContainer, type Scene, type TransformNode,
+  SceneLoader, AnimationGroup, Animation, PBRMaterial, Texture, Material, type AssetContainer, type Scene, type TransformNode,
   type AbstractMesh, type Node,
 } from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
@@ -99,13 +99,6 @@ export class HumanLibrary {
       anims[clip] = this.retarget(src, `${g}_${file}`, d, nodes, clip);
     }
     const meshes = root.getChildMeshes(false);
-    // Gesichtsknochen auf die Bindungs-Pose setzen (die Ruhe-Pose der Datei kann z. B. einen offenen Kiefer haben)
-    const skel = inst.skeletons[0];
-    if (skel) for (const bone of skel.bones) {
-      const tn = bone.getTransformNode(); if (!tn || BODY.test(key(tn.name))) continue;
-      const s = new Vector3(), r = new Quaternion(), t = new Vector3(); bone.getBindMatrix().decompose(s, r, t);
-      tn.position.copyFrom(t); tn.rotationQuaternion = r; tn.scaling.copyFrom(s);
-    }
     for (const m of meshes) { m.isPickable = false; m.receiveShadows = true; }
     return { root, meshes, anims, def: d };
   }
@@ -116,7 +109,7 @@ export class HumanLibrary {
     const ratio = (this.hipH.get(d.name) ?? 90) / (file.startsWith('f_') ? 91.94 : 89.52);
     for (const ta of from.targetedAnimations) {
       const k = key((ta.target as Node).name), target = nodes.get(k); if (!target) continue;
-      if (!BODY.test(k)) continue; // Gesichtsknochen (Kiefer, Lippen, Augenbrauen …) bleiben in Ruhe – passen nicht zwischen Figuren
+      if (!BODY.test(k) && ta.animation.targetProperty !== 'rotationQuaternion') continue; // Gesicht: nur Drehungen (Mund zu, Lider), keine Verschiebungen
       const prop = ta.animation.targetProperty;
       if (prop === 'scaling') continue;
       if (k === 'Bip' && prop !== 'position') continue; // Wurzel-Drehung (Achsen-Umrechnung) nicht übertragen
