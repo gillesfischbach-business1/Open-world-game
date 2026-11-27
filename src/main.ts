@@ -21,7 +21,8 @@ import { Hud } from './ui/hud';
 import { Bubbles } from './ui/bubbles';
 
 const $ = (id: string) => document.getElementById(id)!;
-const setLoad = (f: number, t?: string) => { ($('ldbar') as HTMLElement).style.width = Math.round(f * 100) + '%'; if (t) $('ldtxt').textContent = t; };
+const T0 = performance.now();
+const setLoad = (f: number, t?: string) => { ($('ldbar') as HTMLElement).style.width = Math.round(f * 100) + '%'; if (t) { $('ldtxt').textContent = t; console.info(`[Laden] ${((performance.now() - T0) / 1000).toFixed(1)} s · ${t}`); } };
 const tick = () => new Promise(r => setTimeout(r, 0));
 const COUNTS = { low: [14, 14, 8], mid: [24, 24, 14], high: [36, 34, 20] } as const;
 
@@ -67,7 +68,7 @@ async function main() {
   setLoad(0.66, 'Leit an Autoen'); await tick();
   let lp = 0, lc = 0; const lprog = () => setLoad(0.66 + (lp + lc) * 0.14);
   await Promise.all([people.load(f => { lp = f; lprog(); }), traffic.load(f => { lc = f; lprog(); })]);
-  people.spawn(start.x, start.z); traffic.spawn(start.x, start.z);
+  setLoad(0.82, 'Leit setzen'); people.spawn(start.x, start.z); setLoad(0.84, 'Autoen setzen'); traffic.spawn(start.x, start.z); setLoad(0.86, 'Schied');
   // weitere Figuren im Hintergrund nachladen (mehr Vielfalt, ohne den Start zu bremsen)
   setTimeout(() => people.loadRest(() => (car ? car.pos : player.position), Math.round(nPeople * 0.5)).catch(e => console.warn('Figuren', e)), 1500);
   env.addCasters([...buildings, ...props, ...heroMeshes, ...traffic.cars.flatMap(c => c.meshes)]);
