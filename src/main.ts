@@ -65,7 +65,7 @@ async function main() {
   const player = new Player(scene, start, solid);
   const env = new Environment(scene, player.camera, P);
   setLoad(0.56, 'Stroosseluuchten a Bänken'); await tick();
-  const props = await buildProps(world, scene, height);
+  const props = await buildProps(world, scene, height, perf.device.mobile || quality === 'low');
   setLoad(0.62, 'Blëtz'); await tick();
   const heroMeshes = await player.load(P.heroLight);
 
@@ -79,7 +79,7 @@ async function main() {
   setLoad(0.82, 'Leit setzen'); people.spawn(start.x, start.z); setLoad(0.84, 'Autoen setzen'); traffic.spawn(start.x, start.z); setLoad(0.86, 'Schied');
   // weitere Figuren im Hintergrund nachladen (mehr Vielfalt, ohne den Start zu bremsen)
   setTimeout(() => people.loadRest(() => (car ? car.pos : player.position), Math.round(nPeople * 0.5)).catch(e => console.warn('Figuren', e)), 1500);
-  env.addCasters([...buildings, ...props, ...heroMeshes, ...traffic.cars.flatMap(c => c.meshes)]);
+  env.addCasters([...buildings, ...(quality === 'high' ? props : props.filter(p => !/^(shrub|street_lamp)/.test(p.name))), ...heroMeshes, ...traffic.cars.flatMap(c => c.meshes)]);
   if (quality === 'high') env.addCasters(people.casters());
   for (const m of [terrain, ...roads, ...buildings]) m.receiveShadows = true;
   // Feste Welt: Begrenzungen nicht jedes Bild neu berechnen
@@ -187,7 +187,7 @@ async function main() {
     })(),
     city: on => { city ??= cityMeshes(scene, m => (heroMeshes as AbstractMesh[]).includes(m)); for (const x of city) x.setEnabled(on); },
   }, player.camera, height) : null;
-  if (diag) { env.hour = 15; $('hud').style.opacity = '0.35'; }
+  if (diag) { env.hour = 15; $('hud').style.opacity = '0.35'; player.bletz.setEnabled(false); } // Blëtz stünde sonst direkt vor der Kamera
 
   // ---------------- Spielschleife ----------------
   scene.onAfterPhysicsObservable.add(() => {

@@ -6,7 +6,8 @@ und lehnen Binärdaten als Text ab. Deshalb werden Binärdateien als Base64-Text
 die Seite wandelt sie beim Laden in Blobs zurück, und das Spiel leitet seine Anfragen per
 WebRequest.CustomRequestModifiers (main.ts, window.__BLOB_MAP) auf diese Blobs um.
 
-Aufruf:  python3 build_bench_page.py <dist-Ordner> <Zielordner> [artifact|diag]
+Aufruf:  SINGLE=1 npx vite build --outDir /tmp/single  (eine JS-Datei – die Seite hält höchstens 512 Dateien)
+         python3 build_bench_page.py /tmp/single <Zielordner> [artifact|diag]
 Ergebnis: <Ziel>/page.html (Seite) + Dateien, und <Ziel>/../bpartN.json (Dateilisten je Veröffentlichung,
           höchstens 250 Dateien und 60 MB pro Teil – Grenzen des Artifact-Tools).
 """

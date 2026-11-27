@@ -71,3 +71,15 @@ Vom Emulationstest geprüft (`tools/devicetest/run.mjs`):
 - Knöpfe ≥ 44 px, nichts ragt aus dem Bild, Missionskarte überdeckt weder Minikarte noch Knöpfe.
 - Joystick bewegt Blëtz (Touch-Ereignisse über CDP).
 - Gesprächsfenster oben, Knöpfe unten rechts – nie überlappend.
+
+## Gelernt am Galaxy S20 FE (Adreno 650), Nov 2026
+
+- **Erst messen, dann raten:** `?diag` bzw. die Messseite im Modus `diag` schaltet einzelne Teile ab. Ergebnis dort:
+  mit Stadt 4–9 FPS, ohne Stadt 59 FPS – halbe Auflösung half NICHT (also kein Pixel-, sondern ein Eckpunkt-Problem).
+- **Ursache:** Thin-Instances in EINEM Mesh für die ganze Stadt (900 Laternen à 17 k Eckpunkte, 4320 Büsche à 5 k)
+  ≈ 36 Mio. Eckpunkte pro Bild, ohne Sichtbarkeitsprüfung. Lösung (`world/props.ts`): Aufteilung in 64-m-Viertel,
+  `thinInstanceRefreshBoundingInfo`, `addLODLevel(dist, null)`, vereinfachte `_lo`-Modelle (gltfpack `-si`) auf Handys.
+  Danach 0,6 Mio. Eckpunkte. Regel: **nie** eine Thin-Instance-Gruppe über die ganze Karte.
+- **WebGL2 statt WebGPU auf Android** (Claude-App-WebView): 9 vs. 4 FPS. `core/engine.ts` wählt das auf Handys automatisch.
+- Punktlichter kosten auch bei Intensität 0 – auf Mobilgeräten werden sie entfernt.
+- Prüfen mit Eckpunkt-Zählung inkl. Thin-Instances: `Σ getTotalVertices() × max(1, thinInstanceCount)` der aktiven Meshes.

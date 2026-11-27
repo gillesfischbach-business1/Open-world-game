@@ -48,8 +48,8 @@ export class Diag {
   }
   /** Kamera fest auf die Plaza (mit Menschen, Gebäuden, Straße im Bild) */
   private place() {
-    const p = new Vector3(-12, 0, -60); p.y = this.height(p.x, p.z) + 3.2;
-    const look = new Vector3(-26, 0, -100); look.y = this.height(look.x, look.z) + 1.2;
+    const p = new Vector3(4, 0, 26); p.y = this.height(p.x, p.z) + 3;
+    const look = new Vector3(0, 0, -40); look.y = this.height(look.x, look.z) + 1.2;
     this.camera.position.copyFrom(p); this.camera.setTarget(look);
   }
   /** pro Bild aufrufen; gibt die Position für die Spielfigur zurück (damit Menschen/Autos um die Plaza entstehen) */
