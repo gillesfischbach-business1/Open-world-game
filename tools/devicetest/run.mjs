@@ -46,6 +46,9 @@ for (const d of DEVICES.filter(x => !only?.length || only.includes(x.id))) {
     r.loadS = (Date.now() - t0) / 1000;
     r.report = await page.evaluate(() => window.__letz?.perf?.report());
     r.tierOk = r.report?.tier === d.expect;
+    // Begrüßung schließen (erster Start) – sonst liegt sie über den Bedienelementen
+    r.introShown = await page.evaluate(() => !!document.querySelector('.intro button'));
+    if (r.introShown) { await page.evaluate(() => document.querySelector('.intro button').click()); await page.waitForTimeout(500); }
     // Bedienelemente prüfen
     r.ui = await page.evaluate(() => {
       const q = s => document.querySelector(s), R = el => { if (!el) return null; const b = el.getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; };
