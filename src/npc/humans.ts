@@ -43,6 +43,7 @@ function restY(c: AssetContainer, pick: (n: string) => boolean) {
   const n = c.transformNodes.find(t => pick(t.name)); return n ? Math.abs(n.getAbsolutePosition().y) || 1 : 1;
 }
 const BODY = /^Bip(_(Pelvis|Spine\d?|Neck\d?|Head|[LR]_(Clavicle|UpperArm|Forearm|Hand|Finger\d+|Thigh|Calf|Foot|Toe\d+)))?$/;
+const CORE = /^Bip(_(Pelvis|Spine\d?|Neck\d?|Head|[LR]_(Clavicle|UpperArm|Forearm|Hand|Thigh|Calf|Foot|Toe0)))?$/;
 const isHip = (n: string) => /^Bip\d\d_Pelvis$/.test(n);
 
 export interface Human { root: TransformNode; meshes: AbstractMesh[]; anims: Partial<Record<Clip, AnimationGroup>>; def: AvatarDef; nodes: Map<string, Node>; }
@@ -60,12 +61,13 @@ export class HumanLibrary {
     const total = defs.length + clipFiles.size; let done = 0; const tick = () => onProgress?.(++done / total);
     await Promise.all([
       ...defs.map(async d => { if (!this.avatars.has(d.name)) this.avatars.set(d.name, await this.loadAvatar(d)); tick(); }),
-      ...[...clipFiles].map(async f => { try { this.clips.set(f, await SceneLoader.LoadAssetContainerAsync(DIR + 'anim/', f + '.glb', this.scene)); } catch (e) { console.warn('Animation fehlt', f, e); } tick(); }),
+      ...[...clipFiles].map(async f => { try { const c = await SceneLoader.LoadAssetContainerAsync(DIR + 'anim/', f + '.glb', this.scene); for (const g of c.animationGroups) g.stop(); this.clips.set(f, c); /* Vorlagen nicht abspielen (der Lader startet sie sonst automatisch) */ } catch (e) { console.warn('Animation fehlt', f, e); } tick(); }),
     ]);
   }
 
   private async loadAvatar(d: AvatarDef) {
     const c = await SceneLoader.LoadAssetContainerAsync(DIR + d.name + '/', d.name + '.glb', this.scene);
+    for (const g of c.animationGroups) g.stop();
     const made: Material[] = [];
     for (const m of [...c.materials]) {
       const pbr = new PBRMaterial(m.name, this.scene); pbr.metallic = 0; pbr.roughness = 0.78;
@@ -121,12 +123,13 @@ export class HumanLibrary {
     const ratio = (this.hipH.get(d.name) ?? 90) / (file.startsWith('f_') ? 91.94 : 89.52);
     for (const ta of from.targetedAnimations) {
       const k = key((ta.target as Node).name), target = nodes.get(k); if (!target) continue;
-      const face = !BODY.test(k); // Gesicht: Drehung und Verschiebung aus der Animation (schließt Mund und Lider)
+      // Nur ~22 Körperknochen animieren (Rumpf, Kopf, Arme, Beine). Finger- und Gesichtsknochen bleiben in Ruhe:
+      // spart ≈ 3/4 der Animationsrechnung (auf dem Handy der größte Bremser), sichtbar nur aus nächster Nähe.
+      if (!CORE.test(k)) continue;
       const prop = ta.animation.targetProperty;
       if (prop === 'scaling') continue;
       if (k === 'Bip' && prop !== 'position') continue; // Wurzel-Drehung (Achsen-Umrechnung) nicht übertragen
       if (prop === 'position') {
-        if (face) { grp.addTargetedAnimation(ta.animation, target); continue; }
         if (k !== 'Bip' && k !== 'Bip_Pelvis') continue; // nur Wurzel/Hüfte bewegen, Knochenlängen bleiben
         const id = `${file}|${k}|${ratio.toFixed(3)}`; let a = this.scaled.get(id);
         if (!a) { a = ta.animation.clone(); a.setKeys(ta.animation.getKeys().map(kf => ({ ...kf, value: kf.value.scale(ratio) }))); this.scaled.set(id, a); }

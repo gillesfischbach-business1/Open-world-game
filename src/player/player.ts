@@ -1,9 +1,10 @@
 import {
-  PhysicsCharacterController, CharacterSupportedState, Vector3, Quaternion, Ray, FreeCamera,
+  PhysicsCharacterController, CharacterSupportedState, Vector3, Quaternion, FreeCamera,
   type Scene, type AbstractMesh, type TransformNode,
 } from '@babylonjs/core';
 import type { Input } from '../core/input';
 import { Bletz } from './bletz';
+import { Rays } from '../core/ray';
 
 /**
  * Spielfigur mit physikalischer Steuerung (Havok-Charakter-Controller): laufen, rennen, springen,
@@ -13,8 +14,9 @@ export class Player {
   ctrl: PhysicsCharacterController; root!: TransformNode;
   yaw = 0; speed = 0; private wantJump = false; private vy = 0; private grounded = false;
   camYaw = Math.PI; camPitch = 0.3; camDist = 5.5; camera: FreeCamera;
-  private gravity = new Vector3(0, -18, 0);
+  private gravity = new Vector3(0, -18, 0); private rays: Rays;
   constructor(private scene: Scene, start: Vector3, private colliders: (m: AbstractMesh) => boolean) {
+    this.rays = new Rays(scene);
     this.ctrl = new PhysicsCharacterController(start, { capsuleHeight: 1.0, capsuleRadius: 0.35 }, scene);
     this.ctrl.maxStepHeight = 0.45; this.ctrl.maxSlopeCosine = Math.cos(50 * Math.PI / 180);
     this.camera = new FreeCamera('kamera', start.add(new Vector3(0, 3, 6)), scene); this.camera.minZ = 0.1; this.camera.maxZ = 8000; this.camera.fov = 1.0;
@@ -88,8 +90,8 @@ export class Player {
     const tgt = p.add(new Vector3(0, 0.9, 0));
     const cp = Math.cos(this.camPitch), dir = new Vector3(Math.sin(this.camYaw) * cp, Math.sin(this.camPitch), Math.cos(this.camYaw) * cp);
     let dist = this.camDist;
-    const hit = this.scene.pickWithRay(new Ray(tgt, dir, dist), this.colliders);
-    if (hit?.hit && hit.distance < dist) dist = Math.max(0.8, hit.distance - 0.3);
+    const hit = this.rays.cast(tgt, dir, dist);
+    if (hit && hit.distance < dist) dist = Math.max(0.8, hit.distance - 0.3);
     const want = tgt.add(dir.scale(dist));
     if (this.camPos.lengthSquared() === 0) this.camPos.copyFrom(want);
     this.camPos = Vector3.Lerp(this.camPos, want, Math.min(1, dt * 12));

@@ -1,7 +1,8 @@
-import { SceneLoader, Quaternion, Vector3, Ray, Axis, PointLight, Color3, type AssetContainer, type Scene, type TransformNode, type AbstractMesh } from '@babylonjs/core';
+import { SceneLoader, Quaternion, Vector3, Axis, PointLight, Color3, type AssetContainer, type Scene, type TransformNode, type AbstractMesh } from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
 import type { Network, Path, Sample } from '../world/network';
 import { rng } from '../world/data';
+import { Rays } from '../core/ray';
 
 const CIVIL: Array<[string, number]> = [['sedan', 5], ['hatchback-sports', 3], ['suv', 3], ['suv-luxury', 2], ['sedan-sports', 1], ['taxi', 2], ['van', 2], ['delivery', 2], ['truck', 1], ['garbage-truck', 0.5], ['ambulance', 0.3]];
 const SCALE = 1.75;
@@ -30,16 +31,17 @@ export interface DriveInput { throttle: number; steer: number; }
  */
 export class Traffic {
   cars: Car[] = []; police: Car[] = []; private tpl = new Map<string, AssetContainer>(); private r = rng(4242);
-  private smp: Sample = { x: 0, y: 0, z: 0, dx: 0, dz: 1 }; private siren: PointLight; private sirenT = 0;
+  private smp: Sample = { x: 0, y: 0, z: 0, dx: 0, dz: 1 }; private siren: PointLight; private rays: Rays; private sirenT = 0;
   /** vom Leistungs-Manager gesteuert */ viewDist = 320;
   onHitPerson?: (pos: Vector3, speed: number) => void; onCrash?: (speed: number, other: Car | null) => void;
   constructor(private scene: Scene, private net: Network, private count: number,
     private ground: (m: AbstractMesh) => boolean, private solid: (m: AbstractMesh) => boolean) {
+    this.rays = new Rays(scene);
     this.siren = new PointLight('blaulicht', new Vector3(), scene); this.siren.intensity = 0; this.siren.range = 30;
   }
   async load(onProgress?: (f: number) => void) {
     const names = [...CIVIL.map(c => c[0]), 'police']; let done = 0;
-    await Promise.all(names.map(async n => { this.tpl.set(n, await SceneLoader.LoadAssetContainerAsync('./assets/models/cars/', n + '.glb', this.scene)); onProgress?.(++done / names.length); }));
+    await Promise.all(names.map(async n => { { const c = await SceneLoader.LoadAssetContainerAsync('./assets/models/cars/', n + '.glb', this.scene); for (const g of c.animationGroups) g.stop(); this.tpl.set(n, c); } onProgress?.(++done / names.length); }));
   }
   private make(model: string): Car {
     const inst = this.tpl.get(model)!.instantiateModelsToScene(n => n, false);
@@ -91,8 +93,8 @@ export class Traffic {
     c.yaw -= c.speed / 2.7 * Math.tan(c.steer) * dt;
     const f = c.fwd, step = c.speed * dt;
     // Gebäude vor/hinter dem Auto?
-    const hit = this.scene.pickWithRay(new Ray(c.pos.add(new Vector3(0, 0.8, 0)), f.scale(Math.sign(c.speed) || 1), Math.abs(step) + 2.3), this.solid);
-    if (hit?.hit) { this.onCrash?.(Math.abs(c.speed), null); c.speed = -c.speed * 0.25; c.bounce = 0.3; }
+    const hit = this.rays.cast(c.pos.add(new Vector3(0, 0.8, 0)), f.scale(Math.sign(c.speed) || 1), Math.abs(step) + 2.3, this.solid);
+    if (hit) { this.onCrash?.(Math.abs(c.speed), null); c.speed = -c.speed * 0.25; c.bounce = 0.3; }
     else c.pos.addInPlace(f.scale(step));
     // andere Autos
     for (const o of [...this.cars, ...this.police]) {
@@ -104,9 +106,9 @@ export class Traffic {
     this.toGround(c, dt);
   }
   private toGround(c: Car, dt: number) {
-    const hit = this.scene.pickWithRay(new Ray(c.pos.add(new Vector3(0, 5, 0)), new Vector3(0, -1, 0), 14), this.ground);
-    if (hit?.hit && hit.pickedPoint) {
-      const gy = hit.pickedPoint.y;
+    const hit = this.rays.cast(c.pos.add(new Vector3(0, 5, 0)), new Vector3(0, -1, 0), 14, this.ground);
+    if (hit) {
+      const gy = hit.point.y;
       if (c.pos.y > gy + 0.3) { c.vy -= 18 * dt; c.pos.y = Math.max(gy, c.pos.y + c.vy * dt); } else { c.vy = 0; c.pos.y += (gy - c.pos.y) * Math.min(1, dt * 15); }
     }
   }

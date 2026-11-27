@@ -27,7 +27,7 @@ export class Dogs {
   constructor(private scene: Scene) {}
   async load() {
     this.tpl = await Promise.all(MODELS.map(async m => {
-      const c = await SceneLoader.LoadAssetContainerAsync(DIR, m.file + '.glb', this.scene);
+      const c = await SceneLoader.LoadAssetContainerAsync(DIR, m.file + '.glb', this.scene); for (const g of c.animationGroups) g.stop();
       for (const mat of [...c.materials]) {
         const p = new PBRMaterial(mat.name, this.scene); p.metallic = 0; p.roughness = 0.85; p.albedoTexture = new Texture(DIR + m.tex + '.webp', this.scene, false, true);
         p.forceDepthWrite = true;

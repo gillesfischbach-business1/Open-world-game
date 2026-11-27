@@ -14,7 +14,7 @@ export interface DeviceInfo {
   screenW: number; screenH: number; ua: string; webgpu: boolean;
 }
 export interface Preset {
-  maxPx: number;            // höchste Renderbreite in Pixeln
+  maxMP: number;            // höchstens so viele Millionen Render-Pixel pro Bild (Füllrate ist auf Handys der Engpass)
   minScale: number;         // kleinste Auflösung relativ zu CSS-Pixeln
   shadows: 0 | 1024 | 2048; ssao: boolean; bloom: boolean; msaa: 1 | 4;
   people: number; seated: number; cars: number;
@@ -22,9 +22,9 @@ export interface Preset {
   hdr: '1k' | '2k'; heroLight: boolean;
 }
 export const PRESETS: Record<Tier, Preset> = {
-  low:  { maxPx: 960,  minScale: 0.45, shadows: 0,    ssao: false, bloom: false, msaa: 1, people: 10, seated: 6,  cars: 10, peopleView: 75,  animView: 35, trafficView: 200, farClip: 1400, hdr: '1k', heroLight: false },
-  mid:  { maxPx: 1500, minScale: 0.5,  shadows: 1024, ssao: false, bloom: true,  msaa: 1, people: 20, seated: 12, cars: 20, peopleView: 110, animView: 60, trafficView: 280, farClip: 3500, hdr: '2k', heroLight: true },
-  high: { maxPx: 2400, minScale: 0.6,  shadows: 2048, ssao: true,  bloom: true,  msaa: 4, people: 34, seated: 20, cars: 32, peopleView: 140, animView: 90, trafficView: 320, farClip: 8000, hdr: '2k', heroLight: true },
+  low:  { maxMP: 0.45, minScale: 0.45, shadows: 0,    ssao: false, bloom: false, msaa: 1, people: 10, seated: 6,  cars: 10, peopleView: 75,  animView: 35, trafficView: 200, farClip: 1400, hdr: '1k', heroLight: false },
+  mid:  { maxMP: 0.9,  minScale: 0.5,  shadows: 1024, ssao: false, bloom: true,  msaa: 1, people: 20, seated: 12, cars: 20, peopleView: 110, animView: 60, trafficView: 280, farClip: 3500, hdr: '2k', heroLight: true },
+  high: { maxMP: 2.2,  minScale: 0.6,  shadows: 2048, ssao: true,  bloom: true,  msaa: 4, people: 34, seated: 20, cars: 32, peopleView: 140, animView: 90, trafficView: 320, farClip: 8000, hdr: '2k', heroLight: true },
 };
 
 const KEY = 'letz-perf-v1';
@@ -62,7 +62,7 @@ export function chooseTier(d: DeviceInfo): { tier: Tier; reasons: string[] } {
   if (d.mem !== null && d.mem <= 2) { s = 0; reasons.push(`nur ${d.mem} GB Speicher`); }
   else if (d.mem !== null && d.mem <= 4 && s > 1) { s = 1; reasons.push(`${d.mem} GB Speicher → höchstens mittel`); }
   if (d.cores <= 4 && d.mobile && s > 1) { s = 1; reasons.push(`${d.cores} Kerne auf dem Handy → höchstens mittel`); }
-  if (d.mobile && s === 2 && d.screenW * d.screenH * d.dpr * d.dpr > 3.5e6) reasons.push('Handy mit sehr hoher Pixeldichte – Auflösung wird begrenzt');
+  if (d.mobile && s > 1) { s = 1; reasons.push('Handy/Tablet → höchstens mittel (realistische Figuren und Effekte sind für Handy-Chips zu teuer)'); }
   return { tier: (['low', 'mid', 'high'] as Tier[])[s], reasons };
 }
 
@@ -77,7 +77,7 @@ export class PerfManager {
   tier: Tier; preset: Preset; reasons: string[]; device: DeviceInfo; forced: boolean;
   scale = 1; maxScale = 1; fps = 60; minFps = 60; target: number; log: string[] = [];
   private ladder: Array<{ name: string; down: () => void; up: () => void; on: boolean }> = [];
-  private samples: number[] = []; private winT = 0; private bad = 0; private good = 0; private warm = 5; private knobs!: Knobs;
+  private samples: number[] = []; private winT = 0; private bad = 0; private good = 0; private warm = 3; private knobs!: Knobs;
   private saveT = 0; private stepIdx = 0;
   constructor() {
     this.device = detectDevice();
@@ -87,11 +87,17 @@ export class PerfManager {
     else if (learned && learned.gpu === this.device.gpu) { this.tier = learned.tier; this.forced = false; this.reasons = [`auf diesem Gerät gelernt (zuletzt ${learned.fps.toFixed(0)} FPS)`]; }
     else { const c = chooseTier(this.device); this.tier = c.tier; this.reasons = c.reasons; this.forced = false; }
     this.preset = { ...PRESETS[this.tier] };
+    if (this.device.mobile && !this.forced) {
+      // Handy: weniger gleichzeitige Figuren und kleineres Himmelslicht (Speicher, Ladezeit, Grafikchip)
+      const p = this.preset; p.people = Math.round(p.people * 0.7); p.seated = Math.round(p.seated * 0.6); p.cars = Math.round(p.cars * 0.75);
+      p.hdr = '1k'; p.animView = Math.min(p.animView, 45); p.peopleView = Math.min(p.peopleView, 90);
+    }
     this.target = this.device.mobile ? 40 : 50;
     this.note(`Start: Stufe ${this.tier} – ${this.reasons.join('; ')}`);
   }
   /** größte sinnvolle Auflösung für dieses Fenster */
-  private capScale() { return Math.max(0.3, Math.min(this.device.dpr, this.preset.maxPx / Math.max(320, innerWidth))); }
+  /** größte Auflösung: begrenzt durch Pixeldichte und Pixel-Budget der Stufe (Handy mit 3× DPR rendert sonst 3 Mio. Pixel) */
+  private capScale() { const css = Math.max(320 * 480, innerWidth * innerHeight); return Math.max(0.3, Math.min(this.device.dpr, Math.sqrt(this.preset.maxMP * 1e6 / css))); }
   attach(k: Knobs) {
     this.knobs = k; this.maxScale = this.capScale(); this.scale = this.maxScale;
     if (learnedScale(this.load(), this.device.gpu)) this.scale = Math.min(this.maxScale, learnedScale(this.load(), this.device.gpu)!);
@@ -122,7 +128,8 @@ export class PerfManager {
     if (this.warm > 0) { this.warm--; return; }
     if (this.forced) return;
     if (this.fps < this.target * 0.85) { this.bad++; this.good = 0; } else if (this.fps > this.target * 1.2 && this.minFps > this.target * 0.8) { this.good++; this.bad = 0; } else { this.bad = 0; this.good = Math.max(0, this.good - 1); }
-    if (this.bad >= 2) { this.bad = 0; this.degrade(); }
+    if (this.fps < this.target * 0.55) { this.bad = 0; this.degrade(); this.degrade(); } // weit darunter: sofort zwei Schritte
+    else if (this.bad >= 2) { this.bad = 0; this.degrade(); }
     if (this.good >= 6) { this.good = 0; this.improve(); }
     if (this.saveT > 20) { this.saveT = 0; this.save(); }
   }
