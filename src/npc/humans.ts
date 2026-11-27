@@ -67,6 +67,7 @@ export class HumanLibrary {
     const made: Material[] = [];
     for (const m of [...c.materials]) {
       const pbr = new PBRMaterial(m.name, this.scene); pbr.metallic = 0; pbr.roughness = 0.78;
+      pbr.sideOrientation = Material.CounterClockWiseSideOrientation; // Dreiecke der umgewandelten Dateien sind andersherum gewunden
       const have = this.tex?.[d.name] ?? [];
       if (have.includes(m.name)) {
         const tex = new Texture(`${DIR}${d.name}/${m.name}.webp`, this.scene, false, true); pbr.albedoTexture = tex;
