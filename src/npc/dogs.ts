@@ -60,7 +60,9 @@ export class Dogs {
   }
   private rot(j: Joint | null, axis: 'side' | 'up', a: number) { if (j) j.n.rotationQuaternion = Quaternion.RotationAxis(j[axis], a).multiply(j.rest); }
 
+  private frame = 0;
   update(dt: number) {
+    this.frame++;
     for (const d of this.list) {
       const o = d.owner, vis = o.root.isEnabled() && o.state !== 'down' && o.state !== 'up';
       if (d.root.isEnabled() !== vis) { d.root.setEnabled(vis); d.leash.setEnabled(vis); }
@@ -88,6 +90,7 @@ export class Dogs {
       const wag = Math.sin(d.t * (move > 0.3 ? 9 : 6)) * 0.45;
       d.tail.forEach((j, k) => this.rot(j, 'up', wag * (0.5 + k * 0.3)));
       // Leine: Hand des Besitzers → Halsband
+      if (this.frame % 2) continue; // Leine nur jedes 2. Bild neu ziehen
       d.hand ??= (o.h.root.getDescendants(false).find(n => /Bip0\d_L_Hand$/.test(n.name)) as TransformNode | undefined) ?? null;
       const from = d.hand ? d.hand.getAbsolutePosition() : o.pos.add(new Vector3(0, 0.9, 0));
       const collar = d.head ? d.head.n.getAbsolutePosition() : d.pos.add(new Vector3(0, 0.45, 0));

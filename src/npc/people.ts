@@ -186,7 +186,8 @@ export class People {
 
   update(dt: number, player: Vector3, hour: number, heat: number) {
     this.chatClock -= dt; this.barkClock -= dt;
-    for (const p of this.list) {
+    for (let idx = 0; idx < this.list.length; idx++) {
+      const p = this.list[idx];
       const d = Vector3.Distance(p.pos, player);
       // weit weg: in die Nähe von Blëtz versetzen (Sitzende auf einen freien Platz)
       if (d > 230) {
@@ -194,7 +195,7 @@ export class People {
         if (p.role === 'sitter' && this.sitDown(p, player.x, player.z)) { /* sitzt */ }
         else { const at = this.net.pick(player.x, player.z, 90, 180, this.r, q => q.walk); if (at) { if (p.seat) { p.seat.taken = false; p.seat = null; } p.path = at[0]; p.s = at[1]; p.side = this.sideFor(at[0]); p.state = 'walk'; this.place(p, 1); } }
       }
-      const vis = d < this.viewDist && this.list.indexOf(p) < this.maxActive; p.setVisible(vis); if (!vis) continue;
+      const vis = d < this.viewDist && idx < this.maxActive; p.setVisible(vis); if (!vis) continue;
       p.setFrozen(d > this.animDist);
       p.t -= dt; p.bark -= dt;
       const gaitRatio = (v: number) => v / (CLIP_SPEED[p.gait] ?? 1.3);

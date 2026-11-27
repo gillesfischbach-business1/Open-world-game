@@ -81,6 +81,8 @@ async function main() {
   env.addCasters([...buildings, ...props, ...heroMeshes, ...traffic.cars.flatMap(c => c.meshes)]);
   if (quality === 'high') env.addCasters(people.casters());
   for (const m of [terrain, ...roads, ...buildings]) m.receiveShadows = true;
+  // Feste Welt: Begrenzungen nicht jedes Bild neu berechnen
+  for (const m of [terrain, ...roads, ...buildings, ...props]) { m.freezeWorldMatrix(); m.doNotSyncBoundingInfo = true; }
 
   // Leistungs-Manager an die Stellschrauben anschließen (regelt danach laufend selbst nach)
   perf.attach({

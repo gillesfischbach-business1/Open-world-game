@@ -89,8 +89,8 @@ export class PerfManager {
     this.preset = { ...PRESETS[this.tier] };
     if (this.device.mobile && !this.forced) {
       // Handy: weniger gleichzeitige Figuren und kleineres Himmelslicht (Speicher, Ladezeit, Grafikchip)
-      const p = this.preset; p.people = Math.round(p.people * 0.7); p.seated = Math.round(p.seated * 0.6); p.cars = Math.round(p.cars * 0.75);
-      p.hdr = '1k'; p.animView = Math.min(p.animView, 45); p.peopleView = Math.min(p.peopleView, 90);
+      const p = this.preset; p.people = Math.round(p.people * 0.55); p.seated = Math.round(p.seated * 0.5); p.cars = Math.round(p.cars * 0.7);
+      p.hdr = '1k'; p.animView = Math.min(p.animView, 30); p.peopleView = Math.min(p.peopleView, 80);
     }
     this.target = this.device.mobile ? 40 : 50;
     this.note(`Start: Stufe ${this.tier} – ${this.reasons.join('; ')}`);
