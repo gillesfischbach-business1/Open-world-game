@@ -11,6 +11,6 @@
 | Physik | Havok für Babylon.js | MIT |
 
 ## Figuren und Fahrzeuge
-- **Kenney – Mini Characters** (13 Menschen mit Animationen: stehen, gehen, rennen, fahren, umfallen …) – CC0, www.kenney.nl
 - **Kenney – Car Kit 3.1** (13 Fahrzeuge inkl. Polizei, Taxi, Bus-ähnliche Lieferwagen, mit getrennten Rädern) – CC0, www.kenney.nl
 - **Blëtz** – eigenes Modell, im Code aus Grundformen gebaut (src/player/bletz.ts)
+- **Realistische Menschen und Bewegungen:** Microsoft Rocketbox Avatar Library (22 Figuren, Motion-Capture-Animationen) – MIT-Lizenz, © Microsoft, https://github.com/microsoft/Microsoft-Rocketbox (umgewandelt nach glTF, verkleinert)

@@ -23,7 +23,7 @@ import { Bubbles } from './ui/bubbles';
 const $ = (id: string) => document.getElementById(id)!;
 const setLoad = (f: number, t?: string) => { ($('ldbar') as HTMLElement).style.width = Math.round(f * 100) + '%'; if (t) $('ldtxt').textContent = t; };
 const tick = () => new Promise(r => setTimeout(r, 0));
-const COUNTS = { low: [22, 14], mid: [38, 24], high: [55, 34] } as const;
+const COUNTS = { low: [14, 14, 8], mid: [24, 24, 14], high: [36, 34, 20] } as const;
 
 async function main() {
   const canvas = $('game') as HTMLCanvasElement, quality = pickQuality();
@@ -61,13 +61,15 @@ async function main() {
   const heroMeshes = await player.load(quality !== 'low');
 
   const net = new Network(world, height), dlg = new Dialogue(dialog), bubbles = new Bubbles($('hud'), scene, engine);
-  const [nPeople, nCars] = COUNTS[quality];
-  const people = new People(scene, net, dlg, bubbles, nPeople);
+  const [nPeople, nCars, nSeated] = COUNTS[quality];
+  const people = new People(scene, net, dlg, bubbles, nPeople, nSeated);
   const traffic = new Traffic(scene, net, nCars, ground, solid);
   setLoad(0.66, 'Leit an Autoen'); await tick();
   let lp = 0, lc = 0; const lprog = () => setLoad(0.66 + (lp + lc) * 0.14);
   await Promise.all([people.load(f => { lp = f; lprog(); }), traffic.load(f => { lc = f; lprog(); })]);
   people.spawn(start.x, start.z); traffic.spawn(start.x, start.z);
+  // weitere Figuren im Hintergrund nachladen (mehr Vielfalt, ohne den Start zu bremsen)
+  setTimeout(() => people.loadRest(() => (car ? car.pos : player.position), Math.round(nPeople * 0.5)).catch(e => console.warn('Figuren', e)), 1500);
   env.addCasters([...buildings, ...props, ...heroMeshes, ...traffic.cars.flatMap(c => c.meshes)]);
   if (quality === 'high') env.addCasters(people.casters());
   for (const m of [terrain, ...roads, ...buildings]) m.receiveShadows = true;
@@ -88,7 +90,7 @@ async function main() {
     people.knock(p, car ? car.pos : pos); sound.thump(v / 6); crime(1, ['Dat huet een gesinn! Police gëtt geruff.', 'Das hat jemand gesehen! Polizei wird gerufen.']);
   };
 
-  const closeTalk = () => { hud.closeTalk(); if (talkWith?.state === 'talk') talkWith.state = 'walk'; talkWith = null; talkCool = 0.8; };
+  const closeTalk = () => { hud.closeTalk(); if (talkWith?.state === 'talk') talkWith.state = talkWith.seat ? 'sit' : 'walk'; talkWith = null; talkCool = 0.8; };
   const openTalk = (p: Person) => {
     talkWith = p; p.state = 'talk'; p.mood = 0; p.bark = 30;
     if (!p.met) missions.stats.talks++;
