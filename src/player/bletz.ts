@@ -2,6 +2,7 @@ import {
   MeshBuilder, PBRMaterial, StandardMaterial, Color3, Vector3, Quaternion, TransformNode, PointLight,
   type Scene, type Mesh,
 } from '@babylonjs/core';
+import earcut from 'earcut';
 
 /**
  * Blëtz – eigenes Modell: kleiner goldener Löwe mit elektrischer Mähne und einer
@@ -16,12 +17,12 @@ export class Bletz {
   private phase = 0; private t = 0; private flashT = 0; private air = 0;
 
   constructor(private scene: Scene, withLight: boolean) {
-    const fur = this.pbr('fell', new Color3(0.86, 0.58, 0.22), 0.85);
-    const cream = this.pbr('fell_hell', new Color3(0.97, 0.86, 0.66), 0.85);
+    const fur = this.pbr('fell', new Color3(0.78, 0.42, 0.1), 0.8);
+    const cream = this.pbr('fell_hell', new Color3(0.95, 0.8, 0.55), 0.85);
     const dark = this.pbr('dunkel', new Color3(0.1, 0.07, 0.05), 0.4);
     const white = this.pbr('augen', new Color3(0.97, 0.97, 0.95), 0.2);
-    const paw = this.pbr('pfote', new Color3(0.62, 0.38, 0.14), 0.9);
-    this.maneMat = this.pbr('maehne', new Color3(1, 0.78, 0.18), 0.5); this.maneMat.emissiveColor = new Color3(1, 0.62, 0.08);
+    const paw = this.pbr('pfote', new Color3(0.45, 0.24, 0.07), 0.9);
+    this.maneMat = this.pbr('maehne', new Color3(1, 0.72, 0.05), 0.45); this.maneMat.emissiveColor = new Color3(1, 0.5, 0.02);
     this.bulbMat = new StandardMaterial('gluehbirne', scene); this.bulbMat.disableLighting = true; this.bulbMat.emissiveColor = new Color3(1, 0.96, 0.7);
     const eyeGlow = new StandardMaterial('augenglanz', scene); eyeGlow.disableLighting = true; eyeGlow.emissiveColor = new Color3(0.5, 0.9, 1);
 
@@ -31,6 +32,13 @@ export class Bletz {
     this.sphere('rumpf_m', this.body, fur, [0, 0.62, 0], [0.5, 0.46, 0.95]);
     this.sphere('bauch', this.body, cream, [0, 0.55, 0.02], [0.4, 0.34, 0.8]);
     this.sphere('brust', this.body, cream, [0, 0.7, 0.36], [0.3, 0.32, 0.22]);
+    // Blitz-Zeichen auf beiden Flanken (leuchtend)
+    const boltMat = new StandardMaterial('blitzzeichen', scene); boltMat.disableLighting = true; boltMat.emissiveColor = new Color3(1, 0.92, 0.35); boltMat.backFaceCulling = false;
+    const bolt = [[0.03, 0.17], [0.1, 0.17], [0.03, 0.02], [0.1, 0.02], [-0.07, -0.19], [-0.01, -0.04], [-0.08, -0.04]];
+    for (const sgn of [1, -1]) {
+      const m = MeshBuilder.CreatePolygon('blitzzeichen', { shape: bolt.map(([u, v]) => new Vector3(-v * sgn, 0, u)), sideOrientation: 2 }, scene, earcut);
+      m.parent = this.body; m.material = boltMat; m.rotation.z = -sgn * Math.PI / 2; m.position.set(sgn * 0.252, 0.64, -0.02); m.scaling.setAll(0.9); this.meshes.push(m);
+    }
     // Beine (Drehpunkt an der Hüfte): vorne links/rechts, hinten links/rechts
     for (const [x, z] of [[0.15, 0.3], [-0.15, 0.3], [0.15, -0.3], [-0.15, -0.3]]) {
       const hip = this.node('huefte', this.body, x, 0.55, z);
