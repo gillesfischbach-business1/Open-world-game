@@ -67,11 +67,11 @@ export class HumanLibrary {
     const made: Material[] = [];
     for (const m of [...c.materials]) {
       const pbr = new PBRMaterial(m.name, this.scene); pbr.metallic = 0; pbr.roughness = 0.78;
-      pbr.sideOrientation = Material.CounterClockWiseSideOrientation; // Dreiecke der umgewandelten Dateien sind andersherum gewunden
       const have = this.tex?.[d.name] ?? [];
       if (have.includes(m.name)) {
         const tex = new Texture(`${DIR}${d.name}/${m.name}.webp`, this.scene, false, true); pbr.albedoTexture = tex;
         if (have.includes(m.name + '_n')) { pbr.bumpTexture = new Texture(`${DIR}${d.name}/${m.name}_n.webp`, this.scene, false, true); pbr.bumpTexture.level = 0.8; }
+        if (!/opacity/.test(m.name)) { tex.hasAlpha = false; pbr.transparencyMode = Material.MATERIAL_OPAQUE; pbr.forceDepthWrite = true; } // Haut/Kleidung undurchsichtig (sonst falsche Tiefenreihenfolge: Mundinneres über Lippen)
         if (/opacity/.test(m.name)) { tex.hasAlpha = true; pbr.useAlphaFromAlbedoTexture = true; pbr.transparencyMode = Material.MATERIAL_ALPHATEST; pbr.alphaCutOff = 0.35; pbr.backFaceCulling = false; }
       } else { // ohne Textur (z. B. Brillengläser): dunkles, leicht spiegelndes Glas
         pbr.albedoColor.set(0.05, 0.05, 0.06); pbr.roughness = 0.1; pbr.alpha = 0.55; pbr.metallic = 0.3;
@@ -110,11 +110,12 @@ export class HumanLibrary {
     const ratio = (this.hipH.get(d.name) ?? 90) / (file.startsWith('f_') ? 91.94 : 89.52);
     for (const ta of from.targetedAnimations) {
       const k = key((ta.target as Node).name), target = nodes.get(k); if (!target) continue;
-      if (!BODY.test(k)) continue; // Gesicht bleibt in der Ruhe-Pose
+      const face = !BODY.test(k); // Gesicht: Drehung und Verschiebung aus der Animation (schließt Mund und Lider)
       const prop = ta.animation.targetProperty;
       if (prop === 'scaling') continue;
       if (k === 'Bip' && prop !== 'position') continue; // Wurzel-Drehung (Achsen-Umrechnung) nicht übertragen
       if (prop === 'position') {
+        if (face) { grp.addTargetedAnimation(ta.animation, target); continue; }
         if (k !== 'Bip' && k !== 'Bip_Pelvis') continue; // nur Wurzel/Hüfte bewegen, Knochenlängen bleiben
         const id = `${file}|${k}|${ratio.toFixed(3)}`; let a = this.scaled.get(id);
         if (!a) { a = ta.animation.clone(); a.setKeys(ta.animation.getKeys().map(kf => ({ ...kf, value: kf.value.scale(ratio) }))); this.scaled.set(id, a); }
