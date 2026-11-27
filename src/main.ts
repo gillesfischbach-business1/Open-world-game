@@ -6,6 +6,7 @@ import { PerfManager } from './core/perf';
 import { Bench } from './core/bench';
 import { Diag, diagPending, cityMeshes } from './core/diag';
 import { Remote } from './core/remote';
+import { BakedAO } from './world/bake';
 import { Input } from './core/input';
 import { loadWorld, makeHeight } from './world/data';
 import { Materials } from './world/materials';
@@ -56,6 +57,12 @@ async function main() {
   const roads = buildRoads(world, scene, mats, height);
   setLoad(0.5, 'Gebaier'); await tick();
   const buildings = buildBuildings(world, scene, mats, height);
+  // vorausberechnete Umgebungsverdeckung (tools/bake/bake_ao.py) – fehlt die Datei, läuft das Spiel ohne
+  if (!new URLSearchParams(location.search).has('noao')) try {
+    const ao = await BakedAO.load(scene);
+    ao.applyGround([terrain, ...roads.filter(m => m.name !== 'markierung')]);
+    ao.applyWalls(buildings.filter(m => m.name.startsWith('waende_')), height);
+  } catch (e) { console.warn('Schattenkarte', e); }
   const solid = (m: AbstractMesh) => buildings.includes(m as never);
   const groundSet = new Set<AbstractMesh>([terrain, ...roads]);
   // Strahltests laufen über die Physik (core/ray.ts) – Meshes müssen dafür nicht auswählbar sein

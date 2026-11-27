@@ -47,10 +47,12 @@ const styleOf = (name: string, h: number, r: () => number) => {
   if (/Halle|Massenoire|Terres Rouges/i.test(name)) return 'brick';
   return h > 14 ? (r() < 0.5 ? 'facade' : 'concrete') : r() < 0.65 ? 'plaster' : 'brick';
 };
+/** offene Bahnsteigdächer (Belval-Université) */
+export const isCanopy = (name: string) => /^Belval-Université$|^Gare |Bahnsteig/i.test(name || '');
 const area2 = (f: Flat) => { let a = 0; for (let i = 0, j = f.length - 2; i < f.length; j = i, i += 2) a += (f[j] - f[i]) * (f[j + 1] + f[i + 1]); return a; };
 
 export function buildBuildings(w: WorldData, scene: Scene, mats: Materials, height: H): Mesh[] {
-  const r = rng(2020), walls = new Map<string, GeoBuilder>(), roof = new GeoBuilder(), glass = new GeoBuilder(), frame = new GeoBuilder();
+  const r = rng(2020), walls = new Map<string, GeoBuilder>(), roof = new GeoBuilder(), glass = new GeoBuilder(), frame = new GeoBuilder(), posts = new GeoBuilder();
   const tints = [new Color3(1, 1, 1), new Color3(0.95, 0.9, 0.82), new Color3(0.85, 0.88, 0.92), new Color3(0.96, 0.86, 0.78), new Color3(0.82, 0.86, 0.8)];
   for (const [, name, hRaw, ring] of w.B) {
     if (!ring || ring.length < 6) continue;
@@ -60,7 +62,14 @@ export function buildBuildings(w: WorldData, scene: Scene, mats: Materials, heig
     let g = walls.get(key); if (!g) { g = new GeoBuilder(); walls.set(key, g); }
     const ccw = area2(ring) > 0, n = ring.length / 2;
     let u0 = 0;
-    for (let i = 0; i < n; i++) {
+    // Bahnsteigdach (in den Kartendaten ein geschlossener Block): nur Dach auf Stützen, sonst stünde man „im“ Gebäude
+    if (isCanopy(name)) for (let i = 0; i < n; i++) {
+      const ax = ring[i * 2], az = ring[i * 2 + 1], bx = ring[((i + 1) % n) * 2], bz = ring[((i + 1) % n) * 2 + 1], L = Math.hypot(bx - ax, bz - az);
+      for (let s = 0; s < L; s += 9) { const x = ax + (bx - ax) * s / L, z = az + (bz - az) * s / L, y0 = height(x, z) - 0.2, d = 0.18;
+        const c = [[x - d, z - d], [x + d, z - d], [x + d, z + d], [x - d, z + d]];
+        for (let k = 0; k < 4; k++) { const [px, pz] = c[k], [qx, qz] = c[(k + 1) % 4]; posts.quad([[px, y0, pz], [qx, y0, qz], [qx, top, qz], [px, top, pz]], [[0, 0], [0.36, 0], [0.36, top - y0], [0, top - y0]]); } }
+    }
+    if (!isCanopy(name)) for (let i = 0; i < n; i++) {
       const a = i, b = (i + 1) % n, ax = ring[a * 2], az = ring[a * 2 + 1], bx = ring[b * 2], bz = ring[b * 2 + 1], L = Math.hypot(bx - ax, bz - az); if (L < 0.05) continue;
       // Außennormale
       let nx = -(bz - az) / L, nz = (bx - ax) / L; if (pip((ax + bx) / 2 + nx * 0.15, (az + bz) / 2 + nz * 0.15, ring)) { nx = -nx; nz = -nz; }
@@ -97,6 +106,7 @@ export function buildBuildings(w: WorldData, scene: Scene, mats: Materials, heig
     const m = g.build('waende_' + key, scene, mats.get(st, ti >= 0 ? { tint: tints[ti], name: '_' + ti } : undefined));
     if (m) out.push(m);
   }
+  const postM = posts.build('stuetzen', scene, mats.get('concrete')); if (postM) out.push(postM);
   const roofM = roof.build('daecher', scene, mats.get('concrete')); if (roofM) { roofM.material!.backFaceCulling = false; out.push(roofM); }
   const gm = new PBRMaterial('glas', scene); gm.albedoColor = new Color3(0.05, 0.07, 0.09); gm.metallic = 0.6; gm.roughness = 0.06; gm.environmentIntensity = 1.4;
   const fm = new PBRMaterial('fensterbank', scene); fm.albedoColor = new Color3(0.75, 0.75, 0.73); fm.metallic = 0.2; fm.roughness = 0.5;
