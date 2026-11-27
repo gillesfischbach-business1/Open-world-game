@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="lb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Lëtz Adventures – Cloud</title>
+<link rel="stylesheet" href="/hud.css">
+<style>
+  :root { --ink: #0e1116; --paper: #f4f1ea; --accent: #ffcf3a; }
+  html, body { margin: 0; height: 100%; background: #000; color: var(--paper); overflow: hidden; touch-action: none; font-family: system-ui, sans-serif; }
+  #v { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
+  /* Oberfläche des Spiels liegt scharf über dem Video – nur Knöpfe nehmen Eingaben an */
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  #hud button, #hud .intro, #hud .talk { pointer-events: auto; }
+  #net { position: fixed; left: 8px; bottom: 8px; z-index: 30; font: 600 11px system-ui; background: rgba(14,17,22,.7); padding: 4px 8px; border-radius: 8px; pointer-events: none; }
+  #wait { position: fixed; inset: 0; display: grid; place-items: center; z-index: 40; background: var(--ink); text-align: center; padding: 16px; }
+  #wait b { color: var(--accent); }
+  /* Touch-Steuerung des Spielers (läuft lokal, nur die Werte gehen zum Server) */
+  #joy { position: fixed; left: 0; bottom: 0; width: 50%; height: 60%; z-index: 20; display: none; }
+  #knob { position: fixed; width: 64px; height: 64px; margin: -32px; border-radius: 50%; background: rgba(255,255,255,.35); border: 2px solid rgba(255,255,255,.7); display: none; pointer-events: none; z-index: 21; }
+  #btns { position: fixed; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 20; display: none; grid-template-columns: repeat(2, 64px); gap: 12px; }
+  #btns button { width: 64px; height: 64px; border-radius: 50%; border: 2px solid rgba(255,255,255,.6); background: rgba(14,17,22,.55); color: #fff; font: 700 12px system-ui; }
+  #btns button.main { background: var(--accent); color: #111; }
+  body.touch #joy, body.touch #btns { display: grid; }
+  body.touch #joy { display: block; }
+</style>
+</head>
+<body>
+<canvas id="v"></canvas>
+<div id="hud"></div>
+<div id="joy"></div><div id="knob"></div>
+<div id="btns"><button data-k="KeyQ">ZAP</button><button data-k="KeyE">E</button><button data-k="ShiftLeft" data-toggle="1">LAAF</button><button data-k="Space" class="main">SPRANG</button></div>
+<div id="net">verbinde…</div>
+<div id="wait"><div><b>Lëtz Adventures</b><br><br>Das Spiel startet auf dem Server …<br><small id="wtxt">verbinde</small></div></div>
+<script>
+(() => {
+  const cv = document.getElementById('v'), ctx = cv.getContext('2d'), hud = document.getElementById('hud'), net = document.getElementById('net'), wait = document.getElementById('wait');
+  const touch = 'ontouchstart' in window || navigator.maxTouchPoints > 0; if (touch) document.body.classList.add('touch');
+  let ws, dec = null, cfg = null, gotKey = false, control = false, frames = 0, rtt = 0, mapSrc = '';
+  const send = o => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); };
+
+  let decCfg = null, errs = 0;
+  async function makeDecoder(c) {
+    if (!('VideoDecoder' in window)) { document.getElementById('wtxt').textContent = 'Dieser Browser kann kein Video-Streaming (WebCodecs). Bitte Chrome, Edge, Safari 17+ oder Firefox 130+ nutzen.'; return; }
+    if (dec && dec.state !== 'closed') dec.close(); gotKey = false; cfg = c;
+    dec = new VideoDecoder({
+      output: f => { errs = 0; if (cv.width !== f.displayWidth || cv.height !== f.displayHeight) { cv.width = f.displayWidth; cv.height = f.displayHeight; } ctx.drawImage(f, 0, 0); f.close(); frames++; wait.style.display = 'none'; },
+      error: e => { console.warn('Decoder', e); if (++errs < 20) setTimeout(() => { makeDecoder(cfg); send({ t: 'keyframe' }); }, 300 * errs); },
+    });
+    // Hardware-Dekodierung bevorzugen, sonst was der Browser kann
+    decCfg = null;
+    for (const hw of ['prefer-hardware', 'no-preference']) { const t = { codec: c.codec, optimizeForLatency: true, hardwareAcceleration: hw }; try { if ((await VideoDecoder.isConfigSupported(t)).supported) { decCfg = t; break; } } catch {} }
+    if (!decCfg) { document.getElementById('wtxt').textContent = 'Videoformat ' + c.codec + ' wird hier nicht unterstützt.'; return; }
+    dec.configure(decCfg);
+  }
+  function connect() {
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/play'); ws.binaryType = 'arraybuffer';
+    ws.onopen = async () => {
+      net.textContent = 'verbunden'; sendSize();
+      // welche Videoformate kann dieses Gerät abspielen? (H.264 zuerst – am schnellsten zu kodieren)
+      const list = []; if ('VideoDecoder' in window) for (const codec of ['avc1.640028', 'avc1.42E01F', 'vp09.00.10.08', 'vp8']) { try { if ((await VideoDecoder.isConfigSupported({ codec })).supported) list.push(codec); } catch {} }
+      send({ t: 'codecs', list });
+    };
+    ws.onclose = () => { net.textContent = 'Verbindung weg – neuer Versuch …'; setTimeout(connect, 1500); };
+    ws.onmessage = e => {
+      if (typeof e.data !== 'string') {
+        if (!dec || dec.state !== 'configured') return;
+        const v = new DataView(e.data), key = v.getUint8(0) === 1;
+        if (!gotKey && !key) return; gotKey = true;
+        if (dec.decodeQueueSize > 3 && !key) return; // hinterher → bis zum nächsten Schlüsselbild aufholen
+        dec.decode(new EncodedVideoChunk({ type: key ? 'key' : 'delta', timestamp: v.getFloat64(1), data: new Uint8Array(e.data, 9) }));
+        return;
+      }
+      const m = JSON.parse(e.data);
+      if (m.t === 'config') { makeDecoder(m); send({ t: 'keyframe' }); }
+      else if (m.t === 'hud') { hud.innerHTML = m.html; fixMap(); }
+      else if (m.t === 'map') { mapSrc = m.src; fixMap(); }
+      else if (m.t === 'role') { control = m.control; }
+      else if (m.t === 'pong') rtt = performance.now() - m.c;
+    };
+  }
+  // kleine Karte: im Spiel ein <canvas>, hier als Bild
+  function fixMap() { const c = hud.querySelector('canvas.map'); if (c && mapSrc) { const img = new Image(); img.src = mapSrc; img.className = 'map'; img.width = 150; img.height = 150; c.replaceWith(img); } else { const i = hud.querySelector('img.map'); if (i && mapSrc) i.src = mapSrc; } }
+  // Knöpfe der Spiel-Oberfläche (Gesprächswahl, Einführung) → gleicher Knopf im Server-Spiel
+  hud.addEventListener('pointerdown', e => { const b = e.target.closest('button'); if (!b) return; const all = [...hud.querySelectorAll('button')]; send({ t: 'click', i: all.indexOf(b) }); e.preventDefault(); });
+  setInterval(() => { send({ t: 'ping', c: performance.now() }); net.textContent = `${frames / 2 | 0} FPS · ${rtt | 0} ms${control ? '' : ' · Zuschauer'}`; frames = 0; }, 2000);
+  const sendSize = () => send({ t: 'size', w: innerWidth, h: innerHeight });
+  addEventListener('resize', () => { clearTimeout(sendSize.t); sendSize.t = setTimeout(sendSize, 400); });
+
+  // ---------- Tastatur & Maus ----------
+  const KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyE', 'KeyQ', 'KeyM', 'ShiftLeft', 'ShiftRight', 'Escape', 'KeyP']);
+  addEventListener('keydown', e => { if (KEYS.has(e.code) && !e.repeat) { send({ t: 'key', code: e.code, down: true }); e.preventDefault(); } });
+  addEventListener('keyup', e => { if (KEYS.has(e.code)) send({ t: 'key', code: e.code, down: false }); });
+  addEventListener('blur', () => { for (const c of KEYS) send({ t: 'key', code: c, down: false }); });
+  let lx = 0, ly = 0; const flushLook = () => { if (lx || ly) { send({ t: 'look', dx: lx, dy: ly }); lx = ly = 0; } requestAnimationFrame(flushLook); }; flushLook();
+  cv.addEventListener('mousedown', () => { if (!touch) cv.requestPointerLock?.(); });
+  addEventListener('mousemove', e => { if (document.pointerLockElement === cv) { lx += e.movementX; ly += e.movementY; } });
+
+  // ---------- Touch ----------
+  const joy = document.getElementById('joy'), knob = document.getElementById('knob'), R = 56; let jid = -1, ox = 0, oy = 0;
+  joy.addEventListener('touchstart', e => { const t = e.changedTouches[0]; jid = t.identifier; ox = t.clientX; oy = t.clientY; knob.style.display = 'block'; knob.style.left = ox + 'px'; knob.style.top = oy + 'px'; e.preventDefault(); }, { passive: false });
+  joy.addEventListener('touchmove', e => { for (const t of e.changedTouches) if (t.identifier === jid) { let dx = t.clientX - ox, dy = t.clientY - oy; const L = Math.hypot(dx, dy); if (L > R) { dx *= R / L; dy *= R / L; } knob.style.left = ox + dx + 'px'; knob.style.top = oy + dy + 'px'; send({ t: 'joy', x: dx / R, y: dy / R }); } e.preventDefault(); }, { passive: false });
+  const jend = e => { for (const t of e.changedTouches) if (t.identifier === jid) { jid = -1; knob.style.display = 'none'; send({ t: 'joy', x: 0, y: 0 }); } };
+  joy.addEventListener('touchend', jend); joy.addEventListener('touchcancel', jend);
+  let cid = -1, cx = 0, cy = 0;
+  cv.addEventListener('touchstart', e => { for (const t of e.changedTouches) if (cid < 0) { cid = t.identifier; cx = t.clientX; cy = t.clientY; } }, { passive: true });
+  cv.addEventListener('touchmove', e => { for (const t of e.changedTouches) if (t.identifier === cid) { lx += (t.clientX - cx) * 1.3; ly += (t.clientY - cy) * 1.3; cx = t.clientX; cy = t.clientY; } }, { passive: true });
+  cv.addEventListener('touchend', e => { for (const t of e.changedTouches) if (t.identifier === cid) cid = -1; });
+  let sprint = false;
+  for (const b of document.querySelectorAll('#btns button')) b.addEventListener('touchstart', e => {
+    e.preventDefault(); const code = b.dataset.k;
+    if (b.dataset.toggle) { sprint = !sprint; b.style.background = sprint ? '#ffcf3a' : ''; send({ t: 'key', code, down: sprint }); }
+    else { send({ t: 'key', code, down: true }); setTimeout(() => send({ t: 'key', code, down: false }), 120); }
+  }, { passive: false });
+
+  connect();
+})();
+</script>
+</body>
+</html>

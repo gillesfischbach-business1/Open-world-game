@@ -1,5 +1,5 @@
 import {
-  HDRCubeTexture, DirectionalLight, HemisphericLight, Vector3, Color3, Color4, CascadedShadowGenerator,
+  HDRCubeTexture, SSRRenderingPipeline, Constants, DirectionalLight, HemisphericLight, Vector3, Color3, Color4, CascadedShadowGenerator,
   DefaultRenderingPipeline, SSAO2RenderingPipeline, ImageProcessingConfiguration, Scene, type Camera, type AbstractMesh,
 } from '@babylonjs/core';
 import type { Preset } from '../core/perf';
@@ -12,7 +12,7 @@ export class Environment {
   sun: DirectionalLight; shadows: CascadedShadowGenerator | null = null; pipeline: DefaultRenderingPipeline; ssao: SSAO2RenderingPipeline | null = null;
   hour = 10.5;
   constructor(private scene: Scene, private camera: Camera, P: Preset) {
-    const quality = P.shadows >= 2048 && P.ssao ? 'high' : P.shadows > 0 ? 'mid' : 'low';
+    const quality = P.shadows >= 2048 && P.ssao ? 'high' : P.shadows > 0 ? 'mid' : 'low', ultra = P.shadows >= 4096;
     const hdr = new HDRCubeTexture(P.hdr === '1k' ? './assets/hdri/sky_1k.hdr' : './assets/hdri/sky_2k.hdr', scene, P.hdr === '1k' ? 128 : 256, false, true, false, true);
     scene.environmentTexture = hdr; scene.environmentIntensity = 0.9;
     const sky = scene.createDefaultSkybox(hdr, true, 6000, 0, false); if (sky) sky.infiniteDistance = true;
@@ -22,8 +22,8 @@ export class Environment {
     this.sun.intensity = 3.2; this.sun.diffuse = new Color3(1, 0.95, 0.86);
     if (P.shadows > 0) {
       const csm = new CascadedShadowGenerator(P.shadows, this.sun);
-      csm.numCascades = quality === 'high' ? 4 : 2; csm.lambda = 0.85; csm.shadowMaxZ = quality === 'high' ? 260 : 110;
-      csm.autoCalcDepthBounds = false; csm.stabilizeCascades = true; csm.usePercentageCloserFiltering = true; csm.filteringQuality = CascadedShadowGenerator.QUALITY_MEDIUM;
+      csm.numCascades = quality === 'high' ? 4 : 2; csm.lambda = 0.85; csm.shadowMaxZ = ultra ? 400 : quality === 'high' ? 260 : 110;
+      csm.autoCalcDepthBounds = false; csm.stabilizeCascades = true; csm.usePercentageCloserFiltering = true; csm.filteringQuality = ultra ? CascadedShadowGenerator.QUALITY_HIGH : CascadedShadowGenerator.QUALITY_MEDIUM;
       csm.bias = 0.004; csm.normalBias = 0.02;
       this.shadows = csm;
     }
@@ -39,6 +39,11 @@ export class Environment {
     ip.colorCurvesEnabled = true; ip.colorCurves!.globalSaturation = 12; ip.colorCurves!.highlightsHue = 35; ip.colorCurves!.highlightsDensity = 12; ip.colorCurves!.shadowsHue = 215; ip.colorCurves!.shadowsDensity = 10;
     p.sharpenEnabled = quality === 'high'; if (p.sharpenEnabled) p.sharpen.edgeAmount = 0.25;
     if (P.ssao) this.setSSAO(true);
+    if (P.ssr) { // Spiegelungen (Glasfassaden, Autos, Pfützen-Optik)
+      const ssr = new SSRRenderingPipeline('spiegel', scene, [camera], false, Constants.TEXTURETYPE_UNSIGNED_BYTE);
+      ssr.thickness = 0.4; ssr.selfCollisionNumSkip = 2; ssr.enableAutomaticThicknessComputation = false; ssr.blurDispersionStrength = 0.03;
+      ssr.roughnessFactor = 0.15; ssr.enableSmoothReflections = true; ssr.step = 2; ssr.maxSteps = 120; ssr.maxDistance = 400; ssr.strength = 1; ssr.reflectionSpecularFalloffExponent = 2;
+    }
   }
   /** Schatten an/aus (zur Laufzeit) */
   setShadows(on: boolean) { this.scene.shadowsEnabled = on && !!this.shadows; }

@@ -5,6 +5,7 @@ import { createEngine } from './core/engine';
 import { PerfManager } from './core/perf';
 import { Bench } from './core/bench';
 import { Diag, diagPending, cityMeshes } from './core/diag';
+import { Remote } from './core/remote';
 import { Input } from './core/input';
 import { loadWorld, makeHeight } from './world/data';
 import { Materials } from './world/materials';
@@ -65,6 +66,7 @@ async function main() {
   const player = new Player(scene, start, solid);
   const env = new Environment(scene, player.camera, P);
   setLoad(0.56, 'Stroosseluuchten a Bänken'); await tick();
+  const hq = quality === 'high' || quality === 'ultra';
   const props = await buildProps(world, scene, height, perf.device.mobile || quality === 'low');
   setLoad(0.62, 'Blëtz'); await tick();
   const heroMeshes = await player.load(P.heroLight);
@@ -79,8 +81,8 @@ async function main() {
   setLoad(0.82, 'Leit setzen'); people.spawn(start.x, start.z); setLoad(0.84, 'Autoen setzen'); traffic.spawn(start.x, start.z); setLoad(0.86, 'Schied');
   // weitere Figuren im Hintergrund nachladen (mehr Vielfalt, ohne den Start zu bremsen)
   setTimeout(() => people.loadRest(() => (car ? car.pos : player.position), Math.round(nPeople * 0.5)).catch(e => console.warn('Figuren', e)), 1500);
-  env.addCasters([...buildings, ...(quality === 'high' ? props : props.filter(p => !/^(shrub|street_lamp)/.test(p.name))), ...heroMeshes, ...traffic.cars.flatMap(c => c.meshes)]);
-  if (quality === 'high') env.addCasters(people.casters());
+  env.addCasters([...buildings, ...(hq ? props : props.filter(p => !/^(shrub|street_lamp)/.test(p.name))), ...heroMeshes, ...traffic.cars.flatMap(c => c.meshes)]);
+  if (hq) env.addCasters(people.casters());
   for (const m of [terrain, ...roads, ...buildings]) m.receiveShadows = true;
   // Feste Welt: Begrenzungen nicht jedes Bild neu berechnen
   for (const m of [terrain, ...roads, ...buildings, ...props]) { m.freezeWorldMatrix(); m.doNotSyncBoundingInfo = true; }
@@ -244,6 +246,8 @@ async function main() {
     input.endFrame();
   });
   engine.runRenderLoop(() => scene.render());
+  // Cloud-Betrieb: Bild als Video an den Server, Eingaben vom Spieler zurück
+  if (new URLSearchParams(location.search).has('stream')) { perf.target = 30; new Remote(scene, engine, input, canvas); }
   addEventListener('resize', () => { engine.resize(); perf.resize(); });
   (window as unknown as { __letz: unknown }).__letz = { scene, player, env, engine, backend, world, people, traffic, missions, perf, get car() { return car; }, crime };
 }

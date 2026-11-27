@@ -7,7 +7,7 @@
  *    Bei Reserven wird vorsichtig wieder hochgeregelt.
  * Alle Entscheidungen landen in `log`, damit Tests (und der Skill) sie nachvollziehen können.
  */
-export type Tier = 'low' | 'mid' | 'high';
+export type Tier = 'low' | 'mid' | 'high' | 'ultra'; // ultra: nur von Hand (?q=ultra) oder im Cloud-Betrieb auf Server-Grafikkarten
 
 export interface DeviceInfo {
   gpu: string; mobile: boolean; touch: boolean; mem: number | null; cores: number; dpr: number;
@@ -16,7 +16,8 @@ export interface DeviceInfo {
 export interface Preset {
   maxMP: number;            // höchstens so viele Millionen Render-Pixel pro Bild (Füllrate ist auf Handys der Engpass)
   minScale: number;         // kleinste Auflösung relativ zu CSS-Pixeln
-  shadows: 0 | 1024 | 2048; ssao: boolean; bloom: boolean; msaa: 1 | 4;
+  shadows: 0 | 1024 | 2048 | 4096; ssao: boolean; bloom: boolean; msaa: 1 | 4;
+  ssr?: boolean;            // Spiegelungen auf nassen/glatten Flächen und Glas (Bildschirmraum)
   people: number; seated: number; cars: number;
   peopleView: number; animView: number; trafficView: number; farClip: number;
   hdr: '1k' | '2k'; heroLight: boolean;
@@ -24,6 +25,7 @@ export interface Preset {
 export const PRESETS: Record<Tier, Preset> = {
   low:  { maxMP: 0.45, minScale: 0.45, shadows: 0,    ssao: false, bloom: false, msaa: 1, people: 10, seated: 6,  cars: 10, peopleView: 75,  animView: 35, trafficView: 200, farClip: 1400, hdr: '1k', heroLight: false },
   mid:  { maxMP: 0.9,  minScale: 0.5,  shadows: 1024, ssao: false, bloom: true,  msaa: 1, people: 20, seated: 12, cars: 20, peopleView: 110, animView: 60, trafficView: 280, farClip: 3500, hdr: '2k', heroLight: true },
+  ultra: { maxMP: 3.7, minScale: 0.7, shadows: 4096, ssao: true, bloom: true, msaa: 4, ssr: false, people: 48, seated: 28, cars: 44, peopleView: 180, animView: 140, trafficView: 400, farClip: 8000, hdr: '2k', heroLight: true },
   high: { maxMP: 2.2,  minScale: 0.6,  shadows: 2048, ssao: true,  bloom: true,  msaa: 4, people: 34, seated: 20, cars: 32, peopleView: 140, animView: 90, trafficView: 320, farClip: 8000, hdr: '2k', heroLight: true },
 };
 
@@ -83,7 +85,7 @@ export class PerfManager {
     this.device = detectDevice();
     const q = new URLSearchParams(location.search).get('q');
     const learned = this.load();
-    if (q === 'low' || q === 'mid' || q === 'high') { this.tier = q; this.forced = true; this.reasons = ['von Hand gewählt (?q=' + q + ')']; }
+    if (q === 'low' || q === 'mid' || q === 'high' || q === 'ultra') { this.tier = q; this.forced = true; this.reasons = ['von Hand gewählt (?q=' + q + ')']; }
     else if (learned && learned.gpu === this.device.gpu) { this.tier = learned.tier; this.forced = false; this.reasons = [`auf diesem Gerät gelernt (zuletzt ${learned.fps.toFixed(0)} FPS)`]; }
     else { const c = chooseTier(this.device); this.tier = c.tier; this.reasons = c.reasons; this.forced = false; }
     this.preset = { ...PRESETS[this.tier] };

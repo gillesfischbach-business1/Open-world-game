@@ -1,0 +1,12 @@
+{
+  "name": "letz-cloud-server",
+  "private": true,
+  "type": "module",
+  "description": "Lëtz Adventures in der Cloud: Spiel auf Server-Grafikkarte rendern und als Video streamen (Playwright kommt aus der Umgebung/dem Docker-Image)",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

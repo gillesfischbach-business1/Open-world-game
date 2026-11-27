@@ -51,6 +51,9 @@ export class Input {
     hud.append(btns);
   }
 
+  /** Steuerknüppel aus der Ferne (Cloud-Betrieb): x/y -1..1 wie beim Touch-Knüppel, 0/0 = losgelassen */
+  setRemoteJoy(x: number, y: number) { if (x || y) this.joy = { id: 999, ox: 0, oy: 0, x, y }; else if (this.joy.id === 999) this.joy = { id: -1, ox: 0, oy: 0, x: 0, y: 0 }; }
+
   /** einmal pro Bild aufrufen */
   update() {
     const k = this.keys;
