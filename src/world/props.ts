@@ -42,7 +42,7 @@ export async function buildProps(w: WorldData, scene: Scene, height: H): Promise
     const bench = await template(scene, 'painted_wooden_bench'); const pts = w.osm.pts.bench || [];
     const spots = pts.map(p => [p[0], height(p[0], p[1]) + 0.12, p[1], r() * Math.PI * 2] as [number, number, number, number]);
     out.push(...place(bench, spots));
-    for (const [x, y, z, yaw] of spots) for (const o of [-0.5, 0.5]) {
+    for (const [x, y, z, yaw] of spots) for (const o of [-0.36, 0.36]) {
       const ax = Math.cos(yaw), az = -Math.sin(yaw), fx = Math.sin(yaw + BENCH_FRONT), fz = Math.cos(yaw + BENCH_FRONT);
       seats.push({ x: x + ax * o + fx * 0.05, y: y - 0.12, z: z + az * o + fz * 0.05, yaw: yaw + BENCH_FRONT, kind: 'bench', taken: false });
     }

@@ -49,7 +49,9 @@ export class HumanLibrary {
   private hipH = new Map<string, number>(); private srcHip = new Map<string, number>(); private scaled = new Map<string, Animation>();
   constructor(private scene: Scene) {}
 
+  private tex: Record<string, string[]> | null = null;
   async load(defs: AvatarDef[], onProgress?: (f: number) => void) {
+    this.tex ??= await (await fetch(DIR + 'textures.json')).json();
     const clipFiles = new Set<string>();
     for (const g of ['m', 'f']) for (const c of Object.values(CLIPS)) if ((c !== CLIPS.shake || g === 'f') && !this.clips.has(`${g}_${c}`)) clipFiles.add(`${g}_${c}`);
     const total = defs.length + clipFiles.size; let done = 0; const tick = () => onProgress?.(++done / total);
@@ -61,14 +63,21 @@ export class HumanLibrary {
 
   private async loadAvatar(d: AvatarDef) {
     const c = await SceneLoader.LoadAssetContainerAsync(DIR + d.name + '/', d.name + '.glb', this.scene);
-    for (const m of c.materials) {
+    const made: Material[] = [];
+    for (const m of [...c.materials]) {
       const pbr = new PBRMaterial(m.name, this.scene); pbr.metallic = 0; pbr.roughness = 0.78;
-      const tex = new Texture(`${DIR}${d.name}/${m.name}.webp`, this.scene, false, false); pbr.albedoTexture = tex;
-      if (!/opacity/.test(m.name)) { const n = new Texture(`${DIR}${d.name}/${m.name}_n.webp`, this.scene, false, false); pbr.bumpTexture = n; pbr.bumpTexture.level = 0.8; }
-      else { tex.hasAlpha = true; pbr.useAlphaFromAlbedoTexture = true; pbr.transparencyMode = Material.MATERIAL_ALPHATEST; pbr.alphaCutOff = 0.35; pbr.backFaceCulling = false; }
+      const have = this.tex?.[d.name] ?? [];
+      if (have.includes(m.name)) {
+        const tex = new Texture(`${DIR}${d.name}/${m.name}.webp`, this.scene, false, false); pbr.albedoTexture = tex;
+        if (have.includes(m.name + '_n')) { pbr.bumpTexture = new Texture(`${DIR}${d.name}/${m.name}_n.webp`, this.scene, false, false); pbr.bumpTexture.level = 0.8; }
+        if (/opacity/.test(m.name)) { tex.hasAlpha = true; pbr.useAlphaFromAlbedoTexture = true; pbr.transparencyMode = Material.MATERIAL_ALPHATEST; pbr.alphaCutOff = 0.35; pbr.backFaceCulling = false; }
+      } else { // ohne Textur (z. B. Brillengläser): dunkles, leicht spiegelndes Glas
+        pbr.albedoColor.set(0.05, 0.05, 0.06); pbr.roughness = 0.1; pbr.alpha = 0.55; pbr.metallic = 0.3;
+      }
       for (const mesh of c.meshes) if (mesh.material === m) mesh.material = pbr;
-      c.materials.push(pbr);
+      made.push(pbr); m.dispose();
     }
+    c.materials = made;
     // Hüfthöhe für die Skalierung der Hüftbewegung
     this.hipH.set(d.name, restY(c, isHip));
     return c;
