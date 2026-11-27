@@ -56,3 +56,6 @@ body:not(.touch) .btns, body:not(.touch) .joy { display: none; }
 .intro p i { display: block; font-style: normal; opacity: .65; font-size: .9em; }
 .intro button { margin-top: 12px; width: 100%; padding: 12px; border: 0; border-radius: 10px; background: var(--accent); color: var(--ink); font: 800 16px system-ui; }
 .intro .keys { font-size: 12px; opacity: .7; }
+.bench table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 6px 0; }
+.bench td, .bench th { padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,.12); text-align: left; }
+.bench td:not(:first-child), .bench th:not(:first-child) { text-align: right; width: 56px; }

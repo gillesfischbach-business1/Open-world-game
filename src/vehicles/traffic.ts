@@ -31,6 +31,7 @@ export interface DriveInput { throttle: number; steer: number; }
 export class Traffic {
   cars: Car[] = []; police: Car[] = []; private tpl = new Map<string, AssetContainer>(); private r = rng(4242);
   private smp: Sample = { x: 0, y: 0, z: 0, dx: 0, dz: 1 }; private siren: PointLight; private sirenT = 0;
+  /** vom Leistungs-Manager gesteuert */ viewDist = 320;
   onHitPerson?: (pos: Vector3, speed: number) => void; onCrash?: (speed: number, other: Car | null) => void;
   constructor(private scene: Scene, private net: Network, private count: number,
     private ground: (m: AbstractMesh) => boolean, private solid: (m: AbstractMesh) => boolean) {
@@ -132,7 +133,7 @@ export class Traffic {
       c.pos.set(q.x, q.y, q.z);
       let d = Math.atan2(q.dx, q.dz) - c.yaw; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
       c.steer = Math.max(-0.5, Math.min(0.5, d * 2)); c.yaw += d * Math.min(1, dt * 5);
-      const vis = dp < 320; if (c.root.isEnabled() !== vis) c.root.setEnabled(vis);
+      const vis = dp < this.viewDist; if (c.root.isEnabled() !== vis) c.root.setEnabled(vis);
       if (vis) c.sync(dt);
     }
     // Blëtz fährt

@@ -27,8 +27,10 @@ export const CLIPS = {
   walk: 'walk_neutral_01', walkFast: 'walk_fast_01', stroll: 'walk_stroll_01', jog: 'run_slow_01', run: 'run_fast_01',
   idle: 'idle_neutral_01', look: 'idle_look_around_01', phone: 'cell_phone_textmessage', talk: 'gestic_talk_neutral_01',
   sitBench: 'sit_chair_idle_neutral_01', sitTable: 'sit_table_idle_neutral_01',
-  wave: 'wave_01', cheer: 'cheer_01', shake: 'idle_shake_arms_01',
+  wave: 'wave_01', cheer: 'cheer_01', shake: 'idle_shake_arms_01', drink: 'drink_drinking', paper: 'newspaper_hand_idle',
 } as const;
+/** große Clips, die erst im Hintergrund geladen werden */
+const LATE = new Set<string>(['drink_drinking', 'newspaper_hand_idle']);
 export type Clip = keyof typeof CLIPS;
 /** Gehgeschwindigkeit der Animation in m/s (für passende Schrittlänge) */
 export const CLIP_SPEED: Partial<Record<Clip, number>> = { walk: 1.35, walkFast: 1.75, stroll: 0.95, jog: 3.0, run: 4.6 };
@@ -43,7 +45,7 @@ function restY(c: AssetContainer, pick: (n: string) => boolean) {
 const BODY = /^Bip(_(Pelvis|Spine\d?|Neck\d?|Head|[LR]_(Clavicle|UpperArm|Forearm|Hand|Finger\d+|Thigh|Calf|Foot|Toe\d+)))?$/;
 const isHip = (n: string) => /^Bip\d\d_Pelvis$/.test(n);
 
-export interface Human { root: TransformNode; meshes: AbstractMesh[]; anims: Partial<Record<Clip, AnimationGroup>>; def: AvatarDef; }
+export interface Human { root: TransformNode; meshes: AbstractMesh[]; anims: Partial<Record<Clip, AnimationGroup>>; def: AvatarDef; nodes: Map<string, Node>; }
 
 export class HumanLibrary {
   private avatars = new Map<string, AssetContainer>(); private clips = new Map<string, AssetContainer>();
@@ -51,10 +53,10 @@ export class HumanLibrary {
   constructor(private scene: Scene) {}
 
   private tex: Record<string, string[]> | null = null;
-  async load(defs: AvatarDef[], onProgress?: (f: number) => void) {
+  async load(defs: AvatarDef[], onProgress?: (f: number) => void, late = false) {
     this.tex ??= await (await fetch(DIR + 'textures.json')).json();
     const clipFiles = new Set<string>();
-    for (const g of ['m', 'f']) for (const c of Object.values(CLIPS)) if ((c !== CLIPS.shake || g === 'f') && !this.clips.has(`${g}_${c}`)) clipFiles.add(`${g}_${c}`);
+    for (const g of ['m', 'f']) for (const c of Object.values(CLIPS)) if ((c !== CLIPS.shake || g === 'f') && (late || !LATE.has(c)) && !this.clips.has(`${g}_${c}`)) clipFiles.add(`${g}_${c}`);
     const total = defs.length + clipFiles.size; let done = 0; const tick = () => onProgress?.(++done / total);
     await Promise.all([
       ...defs.map(async d => { if (!this.avatars.has(d.name)) this.avatars.set(d.name, await this.loadAvatar(d)); tick(); }),
@@ -86,6 +88,15 @@ export class HumanLibrary {
   }
 
   has(name: string) { return this.avatars.has(name); }
+  /** später geladene Clips an eine schon vorhandene Figur hängen */
+  upgrade(h: Human) {
+    const g = h.def.female ? 'f' : 'm';
+    for (const [clip, file] of Object.entries(CLIPS) as Array<[Clip, string]>) {
+      if (h.anims[clip]) continue;
+      const src = this.clips.get(`${g}_${file}`) ?? this.clips.get(`${g === 'f' ? 'm' : 'f'}_${file}`); if (!src?.animationGroups[0]) continue;
+      h.anims[clip] = this.retarget(src, `${g}_${file}`, h.def, h.nodes, clip);
+    }
+  }
   /** Eine Figur in die Welt setzen (Größe in Metern, Füße auf y = 0 der Wurzel) */
   spawn(d: AvatarDef): Human | null {
     const c = this.avatars.get(d.name); if (!c) return null;
@@ -101,7 +112,7 @@ export class HumanLibrary {
     }
     const meshes = root.getChildMeshes(false);
     for (const m of meshes) { m.isPickable = false; m.receiveShadows = true; }
-    return { root, meshes, anims, def: d };
+    return { root, meshes, anims, def: d, nodes };
   }
 
   private retarget(src: AssetContainer, file: string, d: AvatarDef, nodes: Map<string, Node>, clip: Clip) {

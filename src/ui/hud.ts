@@ -2,6 +2,7 @@ import type { Vector3 } from '@babylonjs/core';
 import type { Line } from '../game/dialogue';
 import type { Network } from '../world/network';
 import { esc } from './bubbles';
+import type { PerfManager } from '../core/perf';
 
 export interface MissionView { title: Line; text: Line; progress: string; target: { name: string; x: number; z: number } | null; n: number; }
 
@@ -10,7 +11,7 @@ export class Hud {
   private clock: HTMLElement; private dbg: HTMLElement; private stars: HTMLElement; private charge: HTMLElement; private mission: HTMLElement;
   private prompt: HTMLElement; private toasts: HTMLElement; private speedo: HTMLElement; private map: HTMLCanvasElement; private mctx: CanvasRenderingContext2D;
   private talk: HTMLElement; private acc = 0; private mapAcc = 0;
-  constructor(root: HTMLElement, private backend: string, private quality: string, private net: Network) {
+  constructor(root: HTMLElement, private backend: string, private quality: string, private net: Network, private perf?: PerfManager) {
     const top = document.createElement('div'); top.className = 'top';
     top.innerHTML = '<div class="col"><div class="pill" id="uhr">10:30</div><div class="stars" id="stars"></div><div class="charge"><i id="charge"></i></div></div><canvas class="map" width="150" height="150"></canvas>';
     root.append(top);
@@ -54,7 +55,11 @@ export class Hud {
       this.mission.innerHTML = `<div class="n">Missioun ${mv.n}</div><b>${esc(mv.title[0])}</b><div>${esc(mv.text[0])}</div><i>${esc(mv.text[1])}</i>` +
         (mv.progress || mv.target ? `<div class="pr">${esc(mv.progress)}${mv.target ? ` ${mv.progress ? '· ' : ''}${esc(mv.target.name)} ${dist} m` : ''}</div>` : '');
     } else this.mission.innerHTML = '<b>Fräi Spill</b><div>All Missiounen fäerdeg!</div><i>Alle Missionen erledigt – erkunde Belval.</i>';
-    if (this.dbg.classList.contains('on')) this.dbg.textContent = `${s.fps.toFixed(0)} FPS · ${this.backend} · Qualität ${this.quality}\nPos ${s.pos.x.toFixed(0)}, ${s.pos.y.toFixed(1)}, ${s.pos.z.toFixed(0)}`;
+    if (this.dbg.classList.contains('on')) {
+      const r = this.perf?.report();
+      this.dbg.textContent = `${s.fps.toFixed(0)} FPS · ${this.backend} · Stufe ${r?.tier ?? this.quality}${r?.forced ? ' (fest)' : ' (auto)'} · Auflösung ${r ? Math.round(r.scale * 100) : 100} %\n` +
+        `${r?.device.gpu ?? ''}\n` + (r?.steps.length ? `gespart: ${r.steps.join(', ')}\n` : '') + `Pos ${s.pos.x.toFixed(0)}, ${s.pos.y.toFixed(1)}, ${s.pos.z.toFixed(0)}`;
+    }
   }
 
   /** kleine Karte: Straßen um Blëtz, nach Blickrichtung gedreht */

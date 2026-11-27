@@ -1,7 +1,9 @@
 import { Scene, Vector3, HavokPlugin, type AbstractMesh } from '@babylonjs/core';
 import HavokPhysics from '@babylonjs/havok';
 import havokWasm from '@babylonjs/havok/lib/esm/HavokPhysics.wasm?url';
-import { createEngine, pickQuality } from './core/engine';
+import { createEngine } from './core/engine';
+import { PerfManager } from './core/perf';
+import { Bench } from './core/bench';
 import { Input } from './core/input';
 import { loadWorld, makeHeight } from './world/data';
 import { Materials } from './world/materials';
@@ -24,13 +26,13 @@ const $ = (id: string) => document.getElementById(id)!;
 const T0 = performance.now();
 const setLoad = (f: number, t?: string) => { ($('ldbar') as HTMLElement).style.width = Math.round(f * 100) + '%'; if (t) { $('ldtxt').textContent = t; console.info(`[Laden] ${((performance.now() - T0) / 1000).toFixed(1)} s · ${t}`); } };
 const tick = () => new Promise(r => setTimeout(r, 0));
-const COUNTS = { low: [14, 14, 8], mid: [24, 24, 14], high: [36, 34, 20] } as const;
 
 async function main() {
-  const canvas = $('game') as HTMLCanvasElement, quality = pickQuality();
+  const canvas = $('game') as HTMLCanvasElement;
+  // Gerät erkennen und Startstufe wählen (Grafikchip, Speicher, Kerne, Handy/PC; oder auf diesem Gerät gelernt)
+  const perf = new PerfManager(), P = perf.preset, quality = perf.tier;
   setLoad(0.02, 'Grafik starten…');
-  const { engine, backend } = await createEngine(canvas, quality);
-  engine.setHardwareScalingLevel(quality === 'high' ? 1 / Math.min(devicePixelRatio, 2) : quality === 'mid' ? 1 / Math.min(devicePixelRatio, 1.5) : 1);
+  const { engine, backend } = await createEngine(canvas, P.msaa > 1);
   const scene = new Scene(engine);
   scene.useRightHandedSystem = true; // Kartendaten: x = Osten, z = Süden, y = oben
   setLoad(0.06, 'Physik laden…');
@@ -55,14 +57,14 @@ async function main() {
   const input = new Input(canvas, $('hud'));
   const start = new Vector3(4, height(4, 16) + 1.5, 16);
   const player = new Player(scene, start, solid);
-  const env = new Environment(scene, player.camera, quality);
+  const env = new Environment(scene, player.camera, P);
   setLoad(0.56, 'Stroosseluuchten a Bänken'); await tick();
   const props = await buildProps(world, scene, height);
   setLoad(0.62, 'Blëtz'); await tick();
-  const heroMeshes = await player.load(quality !== 'low');
+  const heroMeshes = await player.load(P.heroLight);
 
   const net = new Network(world, height), dlg = new Dialogue(dialog), bubbles = new Bubbles($('hud'), scene, engine);
-  const [nPeople, nCars, nSeated] = COUNTS[quality];
+  const nPeople = P.people, nCars = P.cars, nSeated = P.seated;
   const people = new People(scene, net, dlg, bubbles, nPeople, nSeated);
   const traffic = new Traffic(scene, net, nCars, ground, solid);
   setLoad(0.66, 'Leit an Autoen'); await tick();
@@ -75,7 +77,17 @@ async function main() {
   if (quality === 'high') env.addCasters(people.casters());
   for (const m of [terrain, ...roads, ...buildings]) m.receiveShadows = true;
 
-  const hud = new Hud($('hud'), backend, quality, net), zap = new Zap(scene), sound = new Sound(), missions = new Missions(scene);
+  // Leistungs-Manager an die Stellschrauben anschließen (regelt danach laufend selbst nach)
+  perf.attach({
+    scale: r => engine.setHardwareScalingLevel(1 / r),
+    shadows: on => env.setShadows(on), ssao: on => env.setSSAO(on), bloom: on => env.setBloom(on),
+    peopleView: m => { people.viewDist = m; }, animView: m => { people.animDist = m; }, maxPeople: n => { people.maxActive = n; },
+    trafficView: m => { traffic.viewDist = m; },
+    farClip: m => { player.camera.maxZ = m; scene.fogDensity = 0.0016 * Math.max(1, 3500 / m); },
+  });
+  people.viewDist = P.peopleView; people.animDist = P.animView; traffic.viewDist = P.trafficView; player.camera.maxZ = P.farClip;
+
+  const hud = new Hud($('hud'), backend, quality, net, perf), zap = new Zap(scene), sound = new Sound(), missions = new Missions(scene);
   const say = (l: Line, big = false) => hud.toast(l, big);
   missions.onDone = (t, r) => { sound.chime(); say([`✔ ${t[0]}`, r[0] + ' · ' + r[1]], true); };
 
@@ -132,7 +144,8 @@ async function main() {
   };
 
   // ---------------- Einführung ----------------
-  if (!localStorage.getItem('letz-adventures-v1')) {
+  const benchMode = new URLSearchParams(location.search).has('bench');
+  if (!benchMode && !localStorage.getItem('letz-adventures-v1')) {
     const d = document.createElement('div'); d.className = 'intro';
     d.innerHTML = `<div class="card"><h2>Blëtz zu Belval</h2>
       <p>Du bass de Blëtz – e klenge Léiw voller Elektrizitéit. Iwwer Nuecht bass du zu Belval opgedaucht, tëscht Héichiewen, Uni a Rockhal.<i>Du bist Blëtz – ein kleiner Löwe voller Elektrizität. Über Nacht bist du in Belval aufgetaucht, zwischen Hochöfen, Uni und Rockhal.</i></p>
@@ -145,10 +158,13 @@ async function main() {
   setLoad(1, 'Fäerdeg');
   $('loading').classList.add('out'); setTimeout(() => $('loading').remove(), 900);
   env.setHour(env.hour);
+  const bench = benchMode ? new Bench(scene, perf, backend, (performance.now() - T0) / 1000, p => player.ctrl.setPosition(p), player.camera, height) : null;
+  if (bench) { env.hour = 15; $('hud').style.opacity = '0.35'; }
 
   // ---------------- Spielschleife ----------------
   scene.onAfterPhysicsObservable.add(() => {
     const dt = Math.min(engine.getDeltaTime() / 1000, 1 / 20); if (dt <= 0) return;
+    perf.frame(engine.getDeltaTime() / 1000);
     input.update();
     env.setHour((env.hour + dt / 120) % 24); // 1 Spielstunde = 2 Minuten
     charge = Math.min(100, charge + dt * 7); talkCool -= dt;
@@ -167,7 +183,7 @@ async function main() {
 
     // Bewegung
     const drive = car ? { throttle: input.move.y, steer: input.move.x } : null;
-    if (!car) player.update(dt, input);
+    if (bench) bench.frame(engine.getDeltaTime() / 1000); else if (!car) player.update(dt, input);
     const pos = car ? car.pos : player.position;
     const near = people.list.filter(p => p.root.isEnabled() && Vector3.DistanceSquared(p.pos, pos) < 3600).map(p => p.pos);
     const nd = traffic.update(dt, pos, car, car ? car.speed : player.speed, drive, near);
@@ -198,7 +214,7 @@ async function main() {
     input.endFrame();
   });
   engine.runRenderLoop(() => scene.render());
-  addEventListener('resize', () => engine.resize());
-  (window as unknown as { __letz: unknown }).__letz = { scene, player, env, engine, backend, world, people, traffic, missions, get car() { return car; }, crime };
+  addEventListener('resize', () => { engine.resize(); perf.resize(); });
+  (window as unknown as { __letz: unknown }).__letz = { scene, player, env, engine, backend, world, people, traffic, missions, perf, get car() { return car; }, crime };
 }
 main().catch(e => { console.error(e); $('ldtxt').textContent = 'Fehler: ' + (e?.message || e); });

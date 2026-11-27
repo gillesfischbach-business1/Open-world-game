@@ -1,4 +1,5 @@
-import { Quaternion, Vector3, type AnimationGroup, type Scene, type TransformNode, type AbstractMesh } from '@babylonjs/core';
+import { Quaternion, Vector3, MeshBuilder, PBRMaterial, Color3, type AnimationGroup, type Scene, type TransformNode, type AbstractMesh, type Mesh, type Node } from '@babylonjs/core';
+import { Dogs } from './dogs';
 import type { Network, Path, Sample } from '../world/network';
 import type { Dialogue, Who } from '../game/dialogue';
 import type { Bubbles } from '../ui/bubbles';
@@ -6,7 +7,7 @@ import { rng } from '../world/data';
 import { seats, type Seat } from '../world/props';
 import { HumanLibrary, AVATARS, CLIP_SPEED, type Clip, type AvatarDef, type Human } from './humans';
 
-export type State = 'walk' | 'idle' | 'phone' | 'talk' | 'flee' | 'down' | 'up' | 'chat' | 'sit';
+export type State = 'walk' | 'idle' | 'phone' | 'coffee' | 'paper' | 'talk' | 'flee' | 'down' | 'up' | 'chat' | 'sit';
 type Role = 'walker' | 'commuter' | 'jogger' | 'kid' | 'sitter';
 
 /** Blickrichtung der Rocketbox-Modelle relativ zu +z (im Spiel geprüft) */
@@ -15,7 +16,7 @@ const FACING = 0;
 /** Ein Mensch in Belval: läuft, joggt, sitzt im Café, plaudert, schaut aufs Handy, reagiert auf Blëtz. */
 export class Person {
   state: State = 'walk'; t = 0; speed = 1.3; yaw = 0; pos = new Vector3(); met = 0; shocked = 0; bark = 0; mood = 0;
-  partner: Person | null = null; fleeFrom = new Vector3(); seat: Seat | null = null; tilt = 0; private cur: Clip | '' = ''; gait: Clip = 'walk'; idleClip: Clip = 'idle';
+  partner: Person | null = null; fleeFrom = new Vector3(); seat: Seat | null = null; tilt = 0; private cur: Clip | '' = ''; gait: Clip = 'walk'; idleClip: Clip = 'idle'; prop: Mesh | null = null; hasDog = false;
   constructor(public who: Who, public female: boolean, public role: Role, public h: Human,
     public path: Path, public s: number, public dir: 1 | -1, public side: number) {}
   get root(): TransformNode { return this.h.root; }
@@ -24,30 +25,37 @@ export class Person {
     const g: AnimationGroup | undefined = this.h.anims[n] ?? this.h.anims.idle; if (!g) return;
     if (this.cur !== n) {
       const old = this.cur ? this.h.anims[this.cur] : undefined;
-      g.start(loop, speed); g.setWeightForAllAnimatables(1);
+      g.start(loop, speed); g.setWeightForAllAnimatables(1); if (this.frozen) g.pause();
       if (old && old !== g) old.stop();
       this.cur = n;
     } else g.speedRatio = speed;
   }
   head() { return this.pos.add(new Vector3(0, this.seat ? 1.45 : this.h.def.kind === 'child' ? 1.6 : 2.0, 0)); }
+  frozen = false;
+  /** weit weg: Animation anhalten (spart Rechenzeit), in der Nähe weiterlaufen lassen */
+  setFrozen(f: boolean) { if (f === this.frozen) return; this.frozen = f; const g = this.cur ? this.h.anims[this.cur] : undefined; if (g) { if (f) g.pause(); else g.play(true); } }
   setVisible(v: boolean) { if (this.root.isEnabled() !== v) { this.root.setEnabled(v); if (!v) { for (const a of Object.values(this.h.anims)) a?.stop(); this.cur = ''; } } }
 }
 
 export class People {
-  list: Person[] = []; lib: HumanLibrary; private r = rng(77); private smp: Sample = { x: 0, y: 0, z: 0, dx: 0, dz: 1 };
+  list: Person[] = []; lib: HumanLibrary; dogs: Dogs; private cupMat: PBRMaterial; private paperMat: PBRMaterial; private r = rng(77); private smp: Sample = { x: 0, y: 0, z: 0, dx: 0, dz: 1 };
   private chatClock = 0; barkClock = 0;
+  /** vom Leistungs-Manager gesteuert */ viewDist = 140; animDist = 90; maxActive = 999;
   onKnock?: (p: Person) => void;
   constructor(scene: Scene, private net: Network, private dlg: Dialogue, private bubbles: Bubbles, private count: number, private seatCount: number) {
-    this.lib = new HumanLibrary(scene);
+    this.lib = new HumanLibrary(scene); this.dogs = new Dogs(scene);
+    this.cupMat = new PBRMaterial('becher', scene); this.cupMat.albedoColor = new Color3(0.93, 0.9, 0.84); this.cupMat.metallic = 0; this.cupMat.roughness = 0.5;
+    this.paperMat = new PBRMaterial('zeitung', scene); this.paperMat.albedoColor = new Color3(0.86, 0.85, 0.8); this.paperMat.metallic = 0; this.paperMat.roughness = 0.9; this.paperMat.backFaceCulling = false;
   }
   /** erst eine kleine, gemischte Auswahl laden (schneller Start), den Rest später mit loadRest() */
   async load(onProgress?: (f: number) => void) {
     const first = ['Business_Male_02', 'Business_Female_02', 'Male_Adult_01', 'Female_Adult_01', 'Female_Adult_05', 'Sports_Female_02', 'Male_Child_01'];
-    await this.lib.load(AVATARS.filter(d => first.includes(d.name)), onProgress);
+    await Promise.all([this.lib.load(AVATARS.filter(d => first.includes(d.name)), onProgress), this.dogs.load().catch(e => console.warn('Hunde', e))]);
   }
   /** restliche Figuren im Hintergrund nachladen und zusätzliche Menschen in die Welt setzen */
   async loadRest(where: () => Vector3, extra: number) {
-    await this.lib.load(AVATARS);
+    await this.lib.load(AVATARS, undefined, true);
+    for (const p of this.list) this.lib.upgrade(p.h); // Kaffee- und Zeitungs-Clips nachrüsten
     const c = this.count; this.count = extra; const p = where(); this.spawnWalkers(p.x, p.z, 60, 150); this.count = c;
   }
 
@@ -79,6 +87,8 @@ export class People {
       const at = this.net.pick(x, z, r0, r1, this.r, p => p.walk); if (!at) continue;
       const u = this.r(), role: Role = u < 0.18 ? 'commuter' : u < 0.28 ? 'jogger' : u < 0.4 ? 'kid' : 'walker';
       const p = this.make(role, at); if (!p) continue; this.place(p, 1); this.sync(p); this.list.push(p);
+      // Gassigeher: jeder 7. Spaziergänger hat einen Hund und schlendert
+      if (role === 'walker' && this.r() < 0.15) { p.hasDog = true; p.gait = 'stroll'; p.speed = CLIP_SPEED.stroll! * 0.95; p.who.role = 'family'; this.dogs.attach(p, this.dogs.list.length); }
     }
   }
   private spawnSitters(x: number, z: number) {
@@ -138,7 +148,24 @@ export class People {
     if (best) this.knock(best, from);
     return best;
   }
+  /** Becher (rechte Hand) oder Zeitung (zwischen beiden Händen) an die Hände der Figur setzen */
+  private bone(p: Person, re: RegExp) { for (const [k, n] of p.h.nodes) if (re.test(k)) return n as TransformNode; return null; }
+  private holdProp(p: Person) {
+    const coffee = p.state === 'coffee';
+    if (!p.prop || p.prop.name !== (coffee ? 'becher' : 'zeitung')) {
+      p.prop?.dispose();
+      p.prop = coffee ? MeshBuilder.CreateCylinder('becher', { diameterTop: 0.085, diameterBottom: 0.065, height: 0.11, tessellation: 12 }, this.cupMat.getScene())
+        : MeshBuilder.CreateBox('zeitung', { width: 0.06, height: 0.3, depth: 0.22 }, this.cupMat.getScene()); // gefaltete Zeitung
+      p.prop.material = coffee ? this.cupMat : this.paperMat; p.prop.isPickable = false;
+    }
+    p.prop.setEnabled(true);
+    const rh = this.bone(p, /^Bip_R_Hand$/), rf = this.bone(p, /^Bip_R_Finger2$/), lh = this.bone(p, /^Bip_L_Hand$/), head = this.bone(p, /^Bip_Head$/);
+    if (!rh || !lh || !head) return;
+    if (coffee) { const a = rh.getAbsolutePosition(), b = rf ? rf.getAbsolutePosition() : a; p.prop.position.copyFrom(Vector3.Lerp(a, b, 0.6)); p.prop.rotationQuaternion = null; p.prop.rotation.set(0, 0, 0); }
+    else { const a = rh.getAbsolutePosition(), b = rf ? rf.getAbsolutePosition() : a; p.prop.position.copyFrom(Vector3.Lerp(a, b, 0.8)); p.prop.rotationQuaternion = null; p.prop.rotation.set(0, p.yaw, 0); }
+  }
   knock(p: Person, from: Vector3) {
+    if (p.prop) p.prop.setEnabled(false);
     if (p.partner) { p.partner.partner = null; p.partner.state = 'walk'; p.partner = null; }
     if (p.seat) { p.seat.taken = false; p.seat = null; }
     p.state = 'down'; p.t = 4 + this.r() * 2; p.shocked++; p.play('idle', true, 0.3);
@@ -150,6 +177,7 @@ export class People {
       if (q === except || q.state === 'down' || q.state === 'up' || !q.root.isEnabled() || Vector3.Distance(q.pos, from) > radius) continue;
       if (q.partner) q.partner = null;
       if (q.seat) { q.seat.taken = false; q.seat = null; }
+      if (q.prop) q.prop.setEnabled(false);
       q.state = 'flee'; q.t = 5 + this.r() * 3; q.fleeFrom.copyFrom(from);
       const ahead = this.net.sample(q.path, q.s + q.dir * 3, q.dir, q.side * q.dir, { x: 0, y: 0, z: 0, dx: 0, dz: 0 });
       if (Math.hypot(ahead.x - from.x, ahead.z - from.z) < Vector3.Distance(q.pos, from)) q.dir = (q.dir === 1 ? -1 : 1);
@@ -166,7 +194,8 @@ export class People {
         if (p.role === 'sitter' && this.sitDown(p, player.x, player.z)) { /* sitzt */ }
         else { const at = this.net.pick(player.x, player.z, 90, 180, this.r, q => q.walk); if (at) { if (p.seat) { p.seat.taken = false; p.seat = null; } p.path = at[0]; p.s = at[1]; p.side = this.sideFor(at[0]); p.state = 'walk'; this.place(p, 1); } }
       }
-      const vis = d < 140; p.setVisible(vis); if (!vis) continue;
+      const vis = d < this.viewDist && this.list.indexOf(p) < this.maxActive; p.setVisible(vis); if (!vis) continue;
+      p.setFrozen(d > this.animDist);
       p.t -= dt; p.bark -= dt;
       const gaitRatio = (v: number) => v / (CLIP_SPEED[p.gait] ?? 1.3);
       switch (p.state) {
@@ -174,6 +203,7 @@ export class People {
           this.advance(p, p.speed, dt); p.play(p.gait, true, gaitRatio(p.speed));
           if (p.t > 0 && this.r() < dt * 0.05) {
             if (p.role === 'commuter' && this.r() < 0.6) { p.state = 'phone'; p.t = 4 + this.r() * 6; }
+            else if (p.role === 'walker' && !p.hasDog && p.h.anims.drink && this.r() < 0.3) { p.state = this.r() < 0.55 ? 'coffee' : 'paper'; p.t = 6 + this.r() * 8; }
             else if (p.role !== 'jogger') { p.state = 'idle'; p.t = 2 + this.r() * 4; p.idleClip = p.role === 'kid' ? 'cheer' : this.r() < 0.5 ? 'look' : 'idle'; }
           }
           if (d < 4.5 && p.bark <= 0 && this.barkClock <= 0) {
@@ -188,6 +218,10 @@ export class People {
           break;
         case 'phone':
           p.play('phone'); if (p.t <= 0) { p.state = 'walk'; p.t = 5; }
+          break;
+        case 'coffee': case 'paper':
+          p.play(p.state === 'coffee' ? 'drink' : 'paper'); this.holdProp(p);
+          if (p.t <= 0) { p.state = 'walk'; p.t = 6; if (p.prop) p.prop.setEnabled(false); }
           break;
         case 'talk':
           p.play(p.seat ? (p.seat.kind === 'cafe' ? 'sitTable' : 'sitBench') : p.mood !== 0 ? 'talk' : 'idle'); if (!p.seat) this.turn(p, Math.atan2(player.x - p.pos.x, player.z - p.pos.z), dt);
@@ -214,12 +248,14 @@ export class People {
           if (p.t <= 0) { p.state = 'walk'; p.t = 4; }
           break;
       }
+      if (p.prop && p.state !== 'coffee' && p.state !== 'paper' && p.prop.isEnabled()) p.prop.setEnabled(false);
       this.sync(p);
     }
+    this.dogs.update(dt);
     // zwei Fußgänger treffen sich und plaudern
     if (this.chatClock <= 0) {
       this.chatClock = 1;
-      const near = this.list.filter(p => p.root.isEnabled() && p.state === 'walk' && p.role !== 'jogger' && Vector3.Distance(p.pos, player) < 60);
+      const near = this.list.filter(p => p.root.isEnabled() && p.state === 'walk' && p.role !== 'jogger' && !p.hasDog && Vector3.Distance(p.pos, player) < 60);
       for (let i = 0; i < near.length; i++) for (let j = i + 1; j < near.length; j++) {
         const a = near[i], b = near[j]; if (a.state !== 'walk' || b.state !== 'walk' || Vector3.Distance(a.pos, b.pos) > 2.6 || this.r() > 0.35) continue;
         a.state = b.state = 'chat'; a.t = b.t = 7 + this.r() * 3; a.partner = b; b.partner = a;
@@ -228,5 +264,5 @@ export class People {
       }
     }
   }
-  casters() { return this.list.flatMap(p => p.meshes); }
+  casters() { return [...this.list.flatMap(p => p.meshes), ...this.dogs.list.flatMap(d => d.meshes)]; }
 }
