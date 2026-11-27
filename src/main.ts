@@ -1,9 +1,10 @@
-import { Scene, Vector3, HavokPlugin, WebRequest, type AbstractMesh } from '@babylonjs/core';
+import { Scene, Vector3, HavokPlugin, WebRequest, PBRMaterial, type AbstractMesh, type BaseTexture } from '@babylonjs/core';
 import HavokPhysics from '@babylonjs/havok';
 import havokWasm from '@babylonjs/havok/lib/esm/HavokPhysics.wasm?url';
 import { createEngine } from './core/engine';
 import { PerfManager } from './core/perf';
 import { Bench } from './core/bench';
+import { Diag, diagPending, cityMeshes } from './core/diag';
 import { Input } from './core/input';
 import { loadWorld, makeHeight } from './world/data';
 import { Materials } from './world/materials';
@@ -95,6 +96,8 @@ async function main() {
   people.viewDist = P.peopleView; people.animDist = P.animView; traffic.viewDist = P.trafficView; player.camera.maxZ = P.farClip;
 
   const hud = new Hud($('hud'), backend, quality, net, perf), zap = new Zap(scene), sound = new Sound(), missions = new Missions(scene);
+  // Punktlichter (Blitz, Blaulicht) kosten jedes Pixel, auch ausgeschaltet – auf schwächeren Geräten ganz weglassen
+  if (!P.heroLight) for (const n of ['blitzlicht', 'blaulicht']) scene.getLightByName(n)?.dispose();
   const say = (l: Line, big = false) => hud.toast(l, big);
   missions.onDone = (t, r) => { sound.chime(); say([`✔ ${t[0]}`, r[0] + ' · ' + r[1]], true); };
 
@@ -151,8 +154,10 @@ async function main() {
   };
 
   // ---------------- Einführung ----------------
-  const benchMode = new URLSearchParams(location.search).has('bench') || !!(window as unknown as { __BENCH_HOST?: string }).__BENCH_HOST;
-  if (!benchMode && !localStorage.getItem('letz-adventures-v1')) {
+  const host = (window as unknown as { __BENCH_HOST?: string }).__BENCH_HOST;
+  const diagMode = new URLSearchParams(location.search).has('diag') || host === 'diag' || diagPending();
+  const benchMode = !diagMode && (new URLSearchParams(location.search).has('bench') || !!host);
+  if (!benchMode && !diagMode && !localStorage.getItem('letz-adventures-v1')) {
     const d = document.createElement('div'); d.className = 'intro';
     d.innerHTML = `<div class="card"><h2>Blëtz zu Belval</h2>
       <p>Du bass de Blëtz – e klenge Léiw voller Elektrizitéit. Iwwer Nuecht bass du zu Belval opgedaucht, tëscht Héichiewen, Uni a Rockhal.<i>Du bist Blëtz – ein kleiner Löwe voller Elektrizität. Über Nacht bist du in Belval aufgetaucht, zwischen Hochöfen, Uni und Rockhal.</i></p>
@@ -167,6 +172,22 @@ async function main() {
   env.setHour(env.hour);
   const bench = benchMode ? new Bench(scene, perf, backend, (performance.now() - T0) / 1000, p => player.ctrl.setPosition(p), player.camera, height) : null;
   if (bench) { env.hour = 15; $('hud').style.opacity = '0.35'; }
+  // Diagnose: einzelne Teile abschaltbar
+  const hide = { people: false, traffic: false };
+  let city: AbstractMesh[] | null = null;
+  const diag = diagMode ? new Diag(scene, perf, backend, {
+    scale: r => engine.setHardwareScalingLevel(1 / r),
+    post: on => env.setPost(on), shadows: on => env.setShadows(on),
+    extraLights: on => { for (const l of scene.lights) if (l.name !== 'sonne' && l.name !== 'himmelslicht') l.setEnabled(on); },
+    people: on => { hide.people = !on; if (!on) { for (const p of people.list) p.root.setEnabled(false); for (const d of people.dogs.list) { d.root.setEnabled(false); d.leash.setEnabled(false); } } },
+    traffic: on => { hide.traffic = !on; for (const c of [...traffic.cars, ...traffic.police]) c.root.setEnabled(on); },
+    simpleMats: (() => {
+      const saved = new Map<PBRMaterial, BaseTexture | null>();
+      return (on: boolean) => { for (const x of scene.materials) if (x instanceof PBRMaterial) { if (on) { saved.set(x, x.bumpTexture); x.bumpTexture = null; x.maxSimultaneousLights = 1; } else if (saved.has(x)) { x.bumpTexture = saved.get(x)!; x.maxSimultaneousLights = 4; } } };
+    })(),
+    city: on => { city ??= cityMeshes(scene, m => (heroMeshes as AbstractMesh[]).includes(m)); for (const x of city) x.setEnabled(on); },
+  }, player.camera, height) : null;
+  if (diag) { env.hour = 15; $('hud').style.opacity = '0.35'; }
 
   // ---------------- Spielschleife ----------------
   scene.onAfterPhysicsObservable.add(() => {
@@ -190,12 +211,14 @@ async function main() {
 
     // Bewegung
     const drive = car ? { throttle: input.move.y, steer: input.move.x } : null;
-    if (bench) bench.frame(engine.getDeltaTime() / 1000); else if (!car) player.update(dt, input);
+    if (bench) bench.frame(engine.getDeltaTime() / 1000);
+    else if (diag) { const q = diag.frame(engine.getDeltaTime() / 1000); player.ctrl.setPosition(new Vector3(q.x, height(q.x, q.z) + 1.5, q.z)); }
+    else if (!car) player.update(dt, input);
     const pos = car ? car.pos : player.position;
     const near = people.list.filter(p => p.root.isEnabled() && Vector3.DistanceSquared(p.pos, pos) < 3600).map(p => p.pos);
-    const nd = traffic.update(dt, pos, car, car ? car.speed : player.speed, drive, near);
+    const nd = hide.traffic ? 999 : traffic.update(dt, pos, car, car ? car.speed : player.speed, drive, near);
     if (car) { player.followCar(dt, car.pos, car.yaw, car.speed, input); sound.motor(car.speed); }
-    people.update(dt, pos, env.hour, heat());
+    if (!hide.people) people.update(dt, pos, env.hour, heat());
     zap.update(dt); bubbles.update();
 
     // Fahndung

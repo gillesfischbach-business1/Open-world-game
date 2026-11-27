@@ -90,7 +90,7 @@ export class PerfManager {
     if (this.device.mobile && !this.forced) {
       // Handy: weniger gleichzeitige Figuren und kleineres Himmelslicht (Speicher, Ladezeit, Grafikchip)
       const p = this.preset; p.people = Math.round(p.people * 0.55); p.seated = Math.round(p.seated * 0.5); p.cars = Math.round(p.cars * 0.7);
-      p.hdr = '1k'; p.animView = Math.min(p.animView, 30); p.peopleView = Math.min(p.peopleView, 80);
+      p.hdr = '1k'; p.heroLight = false; p.animView = Math.min(p.animView, 30); p.peopleView = Math.min(p.peopleView, 80);
     }
     this.target = this.device.mobile ? 40 : 50;
     this.note(`Start: Stufe ${this.tier} – ${this.reasons.join('; ')}`);
@@ -134,7 +134,7 @@ export class PerfManager {
     if (this.saveT > 20) { this.saveT = 0; this.save(); }
   }
   private degrade() {
-    const floor = Math.max(this.preset.minScale, 640 / Math.max(320, innerWidth));
+    const floor = Math.max(this.preset.minScale, 360 / Math.max(320, innerWidth)); // mind. ~360 Pixel breit
     if (this.scale > floor + 0.01 && (this.stepIdx === 0 || this.scale > this.maxScale * 0.75)) {
       this.scale = Math.max(floor, this.scale * 0.85); this.knobs.scale(this.scale); this.note(`${this.fps.toFixed(0)} FPS → Auflösung ${(this.scale * 100).toFixed(0)} %`); return;
     }

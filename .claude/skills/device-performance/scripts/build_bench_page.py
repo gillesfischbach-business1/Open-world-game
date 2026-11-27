@@ -6,13 +6,14 @@ und lehnen Binärdaten als Text ab. Deshalb werden Binärdateien als Base64-Text
 die Seite wandelt sie beim Laden in Blobs zurück, und das Spiel leitet seine Anfragen per
 WebRequest.CustomRequestModifiers (main.ts, window.__BLOB_MAP) auf diese Blobs um.
 
-Aufruf:  python3 build_bench_page.py <dist-Ordner> <Zielordner>
+Aufruf:  python3 build_bench_page.py <dist-Ordner> <Zielordner> [artifact|diag]
 Ergebnis: <Ziel>/page.html (Seite) + Dateien, und <Ziel>/../bpartN.json (Dateilisten je Veröffentlichung,
           höchstens 250 Dateien und 60 MB pro Teil – Grenzen des Artifact-Tools).
 """
 import base64, json, os, re, shutil, sys
 
 SRC, DST = sys.argv[1], sys.argv[2]
+HOST = sys.argv[3] if len(sys.argv) > 3 else 'artifact'  # 'diag' = Diagnose-Lauf statt Leistungstest
 if os.path.exists(DST): shutil.rmtree(DST)
 shutil.copytree(SRC, DST)
 os.chdir(DST)
@@ -26,7 +27,7 @@ for d, _, fs in os.walk('.'):
         p = os.path.join(d, f)[2:]
         if p.endswith(('.glb', '.hdr', '.bin')):
             open(p + '.b64.txt', 'w').write(base64.b64encode(open(p, 'rb').read()).decode()); os.remove(p); bins.append(p)
-boot = """window.__BENCH_HOST = 'artifact';
+boot = """window.__BENCH_HOST = %s;
 window.__BIN = %s;
 window.__bootBinaries = (async () => {
   const map = {}, list = window.__BIN.slice(); let done = 0;
@@ -45,7 +46,7 @@ addEventListener('bench-done', async (e) => {
     await db.collection('runs').add(r);
     say('Ergebnis an Claude übermittelt ✓', true);
   } catch (err) { say('Speichern fehlgeschlagen (' + ((err && (err.code || err.message)) || 'Fehler') + ') – bitte „Ergebnis kopieren“'); }
-});""" % json.dumps(bins)
+});""" % (json.dumps(HOST), json.dumps(bins))
 page = f"""<title>Lëtz Leistungstest</title>
 {''.join(f'<link rel="stylesheet" href="{c}">' for c in css)}
 <style>

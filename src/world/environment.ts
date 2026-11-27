@@ -48,6 +48,11 @@ export class Environment {
     else if (!on && this.ssao) { this.ssao.dispose(); this.ssao = null; }
   }
   setBloom(on: boolean) { this.pipeline.bloomEnabled = on; }
+  /** gesamte Nachbearbeitung (Farbkorrektur, Kantenglättung, Leuchten) an/aus */
+  setPost(on: boolean) {
+    const m = this.scene.postProcessRenderPipelineManager;
+    if (on) m.attachCamerasToRenderPipeline('bild', this.camera); else m.detachCamerasFromRenderPipeline('bild', this.camera);
+  }
   addCasters(meshes: AbstractMesh[]) { if (this.shadows) for (const m of meshes) this.shadows.addShadowCaster(m, true); }
   /** Sonne nach Tageszeit (Stunde 0–24) */
   setHour(h: number) {
