@@ -110,7 +110,7 @@ export class HumanLibrary {
     const ratio = (this.hipH.get(d.name) ?? 90) / (file.startsWith('f_') ? 91.94 : 89.52);
     for (const ta of from.targetedAnimations) {
       const k = key((ta.target as Node).name), target = nodes.get(k); if (!target) continue;
-      if (!BODY.test(k) && ta.animation.targetProperty !== 'rotationQuaternion') continue; // Gesicht: nur Drehungen (Mund zu, Lider), keine Verschiebungen
+      if (!BODY.test(k)) continue; // Gesicht bleibt in der Ruhe-Pose
       const prop = ta.animation.targetProperty;
       if (prop === 'scaling') continue;
       if (k === 'Bip' && prop !== 'position') continue; // Wurzel-Drehung (Achsen-Umrechnung) nicht übertragen
