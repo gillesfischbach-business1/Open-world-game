@@ -39,6 +39,8 @@ async function main() {
   const { engine, backend } = await createEngine(canvas, P.msaa > 1);
   const scene = new Scene(engine);
   scene.useRightHandedSystem = true; // Kartendaten: x = Osten, z = Süden, y = oben
+  // Das Spiel wählt nichts per Zeiger aus: keine Strahltests bei jeder Finger-/Mausbewegung (auf Handys sehr teuer)
+  scene.skipPointerMovePicking = true; scene.skipPointerDownPicking = true; scene.skipPointerUpPicking = true;
   setLoad(0.06, 'Physik laden…');
   const hk = await HavokPhysics({ locateFile: () => havokWasm });
   scene.enablePhysics(new Vector3(0, -9.81, 0), new HavokPlugin(true, hk));
@@ -54,8 +56,7 @@ async function main() {
   const buildings = buildBuildings(world, scene, mats, height);
   const solid = (m: AbstractMesh) => buildings.includes(m as never);
   const groundSet = new Set<AbstractMesh>([terrain, ...roads]);
-  for (const m of groundSet) m.isPickable = true;
-  for (const m of buildings) m.isPickable = true;
+  // Strahltests laufen über die Physik (core/ray.ts) – Meshes müssen dafür nicht auswählbar sein
   const ground = (m: AbstractMesh) => groundSet.has(m);
 
   const input = new Input(canvas, $('hud'));

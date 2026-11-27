@@ -22,7 +22,7 @@ export class Environment {
     this.sun.intensity = 3.2; this.sun.diffuse = new Color3(1, 0.95, 0.86);
     if (P.shadows > 0) {
       const csm = new CascadedShadowGenerator(P.shadows, this.sun);
-      csm.numCascades = quality === 'high' ? 4 : 3; csm.lambda = 0.85; csm.shadowMaxZ = quality === 'high' ? 260 : 160;
+      csm.numCascades = quality === 'high' ? 4 : 2; csm.lambda = 0.85; csm.shadowMaxZ = quality === 'high' ? 260 : 110;
       csm.autoCalcDepthBounds = false; csm.stabilizeCascades = true; csm.usePercentageCloserFiltering = true; csm.filteringQuality = CascadedShadowGenerator.QUALITY_MEDIUM;
       csm.bias = 0.004; csm.normalBias = 0.02;
       this.shadows = csm;

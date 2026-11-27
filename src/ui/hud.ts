@@ -42,7 +42,7 @@ export class Hud {
 
   update(dt: number, s: { hour: number; fps: number; pos: Vector3; yaw: number; heat: number; charge: number; speed: number | null; mission: MissionView | null; police: Vector3[] }) {
     this.acc += dt; this.mapAcc += dt;
-    if (this.mapAcc > 0.1) { this.mapAcc = 0; this.drawMap(s.pos, s.yaw, s.mission?.target ?? null, s.police); }
+    if (this.mapAcc > 0.2) { this.mapAcc = 0; this.drawMap(s.pos, s.yaw, s.mission?.target ?? null, s.police); }
     if (this.acc < 0.2) return; this.acc = 0;
     const h = Math.floor(s.hour), m = Math.floor((s.hour - h) * 60);
     this.clock.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
