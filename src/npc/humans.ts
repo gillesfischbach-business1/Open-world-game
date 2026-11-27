@@ -40,6 +40,7 @@ function restY(c: AssetContainer, pick: (n: string) => boolean) {
   for (const r of c.rootNodes) { r.computeWorldMatrix(true); for (const n of r.getDescendants(false)) (n as TransformNode).computeWorldMatrix?.(true); }
   const n = c.transformNodes.find(t => pick(t.name)); return n ? Math.abs(n.getAbsolutePosition().y) || 1 : 1;
 }
+const BODY = /^Bip(_(Pelvis|Spine\d?|Neck\d?|Head|[LR]_(Clavicle|UpperArm|Forearm|Hand|Finger\d+|Thigh|Calf|Foot|Toe\d+)))?$/;
 const isHip = (n: string) => /^Bip\d\d_Pelvis$/.test(n);
 
 export interface Human { root: TransformNode; meshes: AbstractMesh[]; anims: Partial<Record<Clip, AnimationGroup>>; def: AvatarDef; }
@@ -108,6 +109,7 @@ export class HumanLibrary {
     const ratio = (this.hipH.get(d.name) ?? 90) / (file.startsWith('f_') ? 91.94 : 89.52);
     for (const ta of from.targetedAnimations) {
       const k = key((ta.target as Node).name), target = nodes.get(k); if (!target) continue;
+      if (!BODY.test(k)) continue; // Gesichtsknochen (Kiefer, Lippen, Augenbrauen …) bleiben in Ruhe – passen nicht zwischen Figuren
       const prop = ta.animation.targetProperty;
       if (prop === 'scaling') continue;
       if (k === 'Bip' && prop !== 'position') continue; // Wurzel-Drehung (Achsen-Umrechnung) nicht übertragen
