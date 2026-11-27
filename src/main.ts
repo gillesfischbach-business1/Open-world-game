@@ -1,4 +1,4 @@
-import { Scene, Vector3, HavokPlugin, type AbstractMesh } from '@babylonjs/core';
+import { Scene, Vector3, HavokPlugin, WebRequest, type AbstractMesh } from '@babylonjs/core';
 import HavokPhysics from '@babylonjs/havok';
 import havokWasm from '@babylonjs/havok/lib/esm/HavokPhysics.wasm?url';
 import { createEngine } from './core/engine';
@@ -28,6 +28,10 @@ const setLoad = (f: number, t?: string) => { ($('ldbar') as HTMLElement).style.w
 const tick = () => new Promise(r => setTimeout(r, 0));
 
 async function main() {
+  // Auf Seiten, die keine Binärdateien ausliefern (claude.ai-Messseite), legt die Seite die Dateien als Blobs bereit
+  const W = window as unknown as { __bootBinaries?: Promise<void>; __BLOB_MAP?: Record<string, string> };
+  if (W.__bootBinaries) { setLoad(0.01, 'Dateien entpacken…'); await W.__bootBinaries; }
+  if (W.__BLOB_MAP) { const map = W.__BLOB_MAP; WebRequest.CustomRequestModifiers.push((_r, url) => map[url.replace(/^\.\//, '').split('?')[0]] ?? url); }
   const canvas = $('game') as HTMLCanvasElement;
   // Gerät erkennen und Startstufe wählen (Grafikchip, Speicher, Kerne, Handy/PC; oder auf diesem Gerät gelernt)
   const perf = new PerfManager(), P = perf.preset, quality = perf.tier;
@@ -41,7 +45,7 @@ async function main() {
 
   setLoad(0.1, 'Kaart vu Belval…');
   const [world, dialog] = await Promise.all([loadWorld(f => setLoad(0.1 + f * 0.25)), loadDialog()]);
-  const height = makeHeight(world), mats = new Materials(scene);
+  const height = makeHeight(world), mats = new Materials(scene, quality === 'low');
   setLoad(0.38, 'Gelände'); await tick();
   const terrain = buildTerrain(world, scene, mats);
   setLoad(0.44, 'Stroossen'); await tick();
@@ -144,7 +148,7 @@ async function main() {
   };
 
   // ---------------- Einführung ----------------
-  const benchMode = new URLSearchParams(location.search).has('bench');
+  const benchMode = new URLSearchParams(location.search).has('bench') || !!(window as unknown as { __BENCH_HOST?: string }).__BENCH_HOST;
   if (!benchMode && !localStorage.getItem('letz-adventures-v1')) {
     const d = document.createElement('div'); d.className = 'intro';
     d.innerHTML = `<div class="card"><h2>Blëtz zu Belval</h2>

@@ -20,6 +20,16 @@ Jede Änderung an `main` wird automatisch gebaut und in den Zweig `spiel` gelegt
 - TypeScript + Vite
 - Welt aus OpenStreetMap-Daten von Belval
 
+## Leistung auf allen Geräten
+Das Spiel erkennt das Gerät selbst (Grafikchip, Speicher, Kerne, Handy/PC) und wählt eine Grafikstufe.
+Während des Spielens misst es laufend und regelt nach (Auflösung, Effekte, Sichtweite, Menge). Was auf
+einem Gerät gut läuft, merkt es sich für den nächsten Start.
+- `?debug` (oder 3× auf die Uhr tippen): Stufe, Auflösung, Grafikchip, eingesparte Effekte
+- `?bench`: 45-Sekunden-Leistungstest mit Ergebnisseite
+- `?q=low|mid|high`: Stufe von Hand festlegen
+- Tests: `node tools/devicetest/tiers.test.mjs` (Stufenwahl) · `node tools/devicetest/run.mjs` (Geräte-Emulation)
+- Skill für Claude: `.claude/skills/device-performance/`
+
 ## Selbst starten
 ```bash
 npm install

@@ -5,7 +5,9 @@
 // Aufruf:  node tools/devicetest/run.mjs [--url http://127.0.0.1:8791/] [--out devicetest-out] [--devices iphone15pro,motog4] [--bench]
 // Hinweis: In Containern ohne Grafikkarte rendert Chromium per Software (SwiftShader). Die Bildraten sind dann NICHT
 // aussagekräftig – geprüft werden Erkennung, Bedienung und Abläufe. Echte Bildraten liefert ?bench auf dem echten Gerät.
-import { chromium, devices as PW } from 'playwright';
+import { createRequire } from 'node:module';
+// Playwright: lokal installiert oder (wie in Claude-Containern) global vorhanden
+const { chromium, devices: PW } = createRequire(import.meta.url)('playwright');
 import fs from 'node:fs';
 import { DEVICES } from './devices.mjs';
 

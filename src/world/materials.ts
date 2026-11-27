@@ -18,12 +18,13 @@ const DEFS: Record<string, MatDef> = {
 
 export class Materials {
   private cache = new Map<string, PBRMaterial>();
-  constructor(private scene: Scene, private texSize = 1) {}
+  /** lowRes: kleine Texturen (512 px) für schwache Geräte */
+  constructor(private scene: Scene, private lowRes = false) {}
   get(key: keyof typeof DEFS | string, variant?: { tint?: Color3; name?: string }): PBRMaterial {
     const id = key + (variant?.name || '');
     const hit = this.cache.get(id); if (hit) return hit;
     const d = DEFS[key]; const m = new PBRMaterial(id, this.scene);
-    const t = (s: string) => { const tx = new Texture(`./assets/tex/${d.tex}_${s}.jpg`, this.scene, false, true, Texture.TRILINEAR_SAMPLINGMODE); tx.uScale = tx.vScale = 1 / d.size; tx.anisotropicFilteringLevel = 8; return tx; };
+    const t = (s: string) => { const tx = new Texture(`./assets/tex/${this.lowRes ? 'lo/' : ''}${d.tex}_${s}.webp`, this.scene, false, true, Texture.TRILINEAR_SAMPLINGMODE); tx.uScale = tx.vScale = 1 / d.size; tx.anisotropicFilteringLevel = this.lowRes ? 2 : 8; return tx; };
     m.albedoTexture = t('diff');
     m.bumpTexture = t('nor'); m.invertNormalMapY = true; m.bumpTexture.level = d.bump ?? 1;
     m.metallicTexture = null; m.metallic = d.metal ?? 0; m.roughness = d.rough ?? 0.9;
