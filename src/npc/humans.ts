@@ -46,7 +46,7 @@ export interface Human { root: TransformNode; meshes: AbstractMesh[]; anims: Par
 
 export class HumanLibrary {
   private avatars = new Map<string, AssetContainer>(); private clips = new Map<string, AssetContainer>();
-  private hipH = new Map<string, number>(); private srcHip = new Map<string, number>(); private scaled = new Map<string, Animation>();
+  private hipH = new Map<string, number>(); private scaled = new Map<string, Animation>();
   constructor(private scene: Scene) {}
 
   private tex: Record<string, string[]> | null = null;
@@ -68,8 +68,8 @@ export class HumanLibrary {
       const pbr = new PBRMaterial(m.name, this.scene); pbr.metallic = 0; pbr.roughness = 0.78;
       const have = this.tex?.[d.name] ?? [];
       if (have.includes(m.name)) {
-        const tex = new Texture(`${DIR}${d.name}/${m.name}.webp`, this.scene, false, false); pbr.albedoTexture = tex;
-        if (have.includes(m.name + '_n')) { pbr.bumpTexture = new Texture(`${DIR}${d.name}/${m.name}_n.webp`, this.scene, false, false); pbr.bumpTexture.level = 0.8; }
+        const tex = new Texture(`${DIR}${d.name}/${m.name}.webp`, this.scene, false, true); pbr.albedoTexture = tex;
+        if (have.includes(m.name + '_n')) { pbr.bumpTexture = new Texture(`${DIR}${d.name}/${m.name}_n.webp`, this.scene, false, true); pbr.bumpTexture.level = 0.8; }
         if (/opacity/.test(m.name)) { tex.hasAlpha = true; pbr.useAlphaFromAlbedoTexture = true; pbr.transparencyMode = Material.MATERIAL_ALPHATEST; pbr.alphaCutOff = 0.35; pbr.backFaceCulling = false; }
       } else { // ohne Textur (z. B. Brillengläser): dunkles, leicht spiegelndes Glas
         pbr.albedoColor.set(0.05, 0.05, 0.06); pbr.roughness = 0.1; pbr.alpha = 0.55; pbr.metallic = 0.3;
@@ -104,11 +104,13 @@ export class HumanLibrary {
 
   private retarget(src: AssetContainer, file: string, d: AvatarDef, nodes: Map<string, Node>, clip: Clip) {
     const grp = new AnimationGroup(clip, this.scene), from = src.animationGroups[0];
-    const ratio = (this.hipH.get(d.name) ?? 1) / (this.srcHip.get(file) ?? (this.srcHip.set(file, restY(src, isHip)).get(file)!));
+    // Bezug ist die Stand-Hüfthöhe der Rocketbox-Skelette (Mann 89,5 cm, Frau 91,9 cm), nicht der erste Rahmen des Clips
+    const ratio = (this.hipH.get(d.name) ?? 90) / (file.startsWith('f_') ? 91.94 : 89.52);
     for (const ta of from.targetedAnimations) {
       const k = key((ta.target as Node).name), target = nodes.get(k); if (!target) continue;
       const prop = ta.animation.targetProperty;
       if (prop === 'scaling') continue;
+      if (k === 'Bip' && prop !== 'position') continue; // Wurzel-Drehung (Achsen-Umrechnung) nicht übertragen
       if (prop === 'position') {
         if (k !== 'Bip' && k !== 'Bip_Pelvis') continue; // nur Wurzel/Hüfte bewegen, Knochenlängen bleiben
         const id = `${file}|${k}|${ratio.toFixed(3)}`; let a = this.scaled.get(id);
