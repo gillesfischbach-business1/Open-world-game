@@ -58,7 +58,7 @@ async function main() {
   setLoad(0.56, 'Stroosseluuchten a Bänken'); await tick();
   const props = await buildProps(world, scene, height);
   setLoad(0.62, 'Blëtz'); await tick();
-  const heroMeshes = await player.load();
+  const heroMeshes = await player.load(quality !== 'low');
 
   const net = new Network(world, height), dlg = new Dialogue(dialog), bubbles = new Bubbles($('hud'), scene, engine);
   const [nPeople, nCars] = COUNTS[quality];
@@ -119,7 +119,7 @@ async function main() {
   const doZap = () => {
     if (car) return;
     if (charge < 25) { say(['Keng Energie méi – waart e bëssen.', 'Keine Energie mehr – warte kurz.']); return; }
-    charge -= 25; sound.zap();
+    charge -= 25; sound.zap(); player.bletz.flash();
     const from = player.position.add(new Vector3(0, 0.5, 0)).add(player.forward.scale(0.4));
     const p = people.zap(from, player.forward);
     if (p) { zap.fire(from, p.pos.add(new Vector3(0, 1.0, 0))); missions.stats.zaps++; crime(heat() ? 0.6 : 0.4, ['Een huet d\'Police geruff!', 'Jemand hat die Polizei gerufen!']); return; }

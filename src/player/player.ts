@@ -1,17 +1,16 @@
 import {
-  SceneLoader, PhysicsCharacterController, CharacterSupportedState, Vector3, Quaternion, Ray, FreeCamera,
-  type Scene, type AnimationGroup, type AbstractMesh, type TransformNode,
+  PhysicsCharacterController, CharacterSupportedState, Vector3, Quaternion, Ray, FreeCamera,
+  type Scene, type AbstractMesh, type TransformNode,
 } from '@babylonjs/core';
-import '@babylonjs/loaders/glTF';
 import type { Input } from '../core/input';
+import { Bletz } from './bletz';
 
 /**
  * Spielfigur mit physikalischer Steuerung (Havok-Charakter-Controller): laufen, rennen, springen,
- * Stufen und Hänge. Modell vorerst: animierter Fuchs (Khronos glTF-Beispiel, CC-BY 4.0) als Platzhalter
- * für Blëtz, bis ein eigenes Löwenmodell da ist.
+ * Stufen und Hänge. Modell: eigener Blitz-Löwe (siehe bletz.ts).
  */
 export class Player {
-  ctrl: PhysicsCharacterController; root!: TransformNode; anims: Record<string, AnimationGroup> = {};
+  ctrl: PhysicsCharacterController; root!: TransformNode;
   yaw = 0; speed = 0; private wantJump = false; private vy = 0; private grounded = false;
   camYaw = Math.PI; camPitch = 0.3; camDist = 5.5; camera: FreeCamera;
   private gravity = new Vector3(0, -18, 0);
@@ -21,21 +20,17 @@ export class Player {
     this.camera = new FreeCamera('kamera', start.add(new Vector3(0, 3, 6)), scene); this.camera.minZ = 0.1; this.camera.maxZ = 8000; this.camera.fov = 1.0;
     scene.activeCamera = this.camera;
   }
-  async load() {
-    const res = await SceneLoader.ImportMeshAsync('', './assets/models/', 'fox.glb', this.scene);
-    this.root = res.meshes[0]; this.root.scaling.setAll(0.012); // Fuchs-Modell in cm → ~1 m lang
-    for (const m of res.meshes) { m.isPickable = false; m.receiveShadows = true; }
-    for (const g of res.animationGroups) { g.stop(); this.anims[g.name.toLowerCase()] = g; }
-    this.play('survey');
-    return res.meshes;
+  bletz!: Bletz;
+  /** Blëtz-Modell bauen (eigenes Modell aus Grundformen) */
+  async load(withLight = true) {
+    this.bletz = new Bletz(this.scene, withLight); this.root = this.bletz.root;
+    return this.bletz.meshes;
   }
-  private cur = '';
-  private play(n: string, speedRatio = 1) { const g = this.anims[n]; if (!g) return; if (this.cur !== n) { for (const a of Object.values(this.anims)) a.stop(); g.start(true, speedRatio); this.cur = n; } else g.speedRatio = speedRatio; }
   get position() { return this.ctrl.getPosition(); }
   get forward() { return new Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw)); }
   /** Blëtz steigt ein (Modell aus) oder aus (an Position pos) */
   setDriving(on: boolean, pos?: Vector3) {
-    this.root.setEnabled(!on);
+    this.bletz.setEnabled(!on);
     if (pos) { this.ctrl.setPosition(pos); this.ctrl.setVelocity(Vector3.Zero()); this.speed = 0; }
   }
   /** Kamera hinter dem Auto */
@@ -84,7 +79,7 @@ export class Player {
     const p = this.ctrl.getPosition();
     this.root.position.set(p.x, p.y - 0.85, p.z);
     this.root.rotationQuaternion = Quaternion.FromEulerAngles(0, this.yaw, 0);
-    if (!this.grounded) this.play('run', 0.6); else if (this.speed > 5) this.play('run', this.speed / 7); else if (this.speed > 0.4) this.play('walk', this.speed / 2.2); else this.play('survey');
+    this.bletz.animate(dt, this.speed, this.grounded);
     this.updateCamera(dt, p);
   }
 
