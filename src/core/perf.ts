@@ -153,6 +153,12 @@ export class PerfManager {
   save() {
     // gelernt wird die tatsächlich tragfähige Stufe: viele Abbau-Schritte → eine Stufe tiefer beim nächsten Start
     let tier = this.tier; if (this.stepIdx >= 4 && tier !== 'low') tier = tier === 'high' ? 'mid' : 'low';
+    // umgekehrt: läuft es ohne jede Einsparung, mit voller Auflösung und deutlich über dem Ziel → nächstes Mal eine Stufe höher
+    // (Handys höchstens mid). Vorher konnte eine alte schlechte Messung das Gerät für immer auf low festhalten.
+    else if (this.stepIdx === 0 && this.scale >= this.maxScale - 0.02 && this.fps >= this.target * 1.3 && this.minFps >= this.target * 0.9) {
+      const cap: Tier = this.device.mobile ? 'mid' : 'high';
+      if (tier === 'low') tier = 'mid'; else if (tier === 'mid' && cap === 'high') tier = 'high';
+    }
     try { localStorage.setItem(KEY, JSON.stringify({ gpu: this.device.gpu, tier, fps: this.fps, scale: this.scale })); } catch { /* egal */ }
   }
   /** Zusammenfassung für Anzeige, Tests und Messbericht */

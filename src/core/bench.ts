@@ -26,8 +26,10 @@ export class Bench {
   constructor(private scene: Scene, private perf: PerfManager, private backend: string, private loadS: number,
     private moveTo: (p: Vector3) => void, private camera: { position: Vector3; setTarget(v: Vector3): void }, private height: (x: number, z: number) => number) {}
   /** pro Bild: Kamera bewegen und Bildzeit speichern */
+  hold = false; // true: noch nicht messen (Inhalte laden nach)
   frame(realDt: number) {
     if (this.done) return;
+    if (this.hold) { const L0 = ROUTE[0], V0 = (a: number[]) => new Vector3(a[0], a[1], a[2]); const p = V0(L0.from); p.y += this.height(p.x, p.z); this.camera.position.copyFrom(p); const lk = V0(L0.look); lk.y += this.height(lk.x, lk.z); this.camera.setTarget(lk); return; }
     const L = ROUTE[this.leg]; this.t += realDt;
     const f = Math.min(1, this.t / L.secs), V = (a: number[]) => new Vector3(a[0], a[1], a[2]);
     const p = Vector3.Lerp(V(L.from), V(L.to), f); p.y += this.height(p.x, p.z);

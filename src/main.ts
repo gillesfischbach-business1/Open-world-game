@@ -94,7 +94,7 @@ async function main() {
   await Promise.all([people.load(f => { lp = f; lprog(); }), traffic.load(f => { lc = f; lprog(); })]);
   setLoad(0.82, 'Leit setzen'); people.spawn(start.x, start.z); setLoad(0.84, 'Autoen setzen'); traffic.spawn(start.x, start.z); setLoad(0.86, 'Schied');
   // weitere Figuren im Hintergrund nachladen (mehr Vielfalt, ohne den Start zu bremsen)
-  setTimeout(() => people.loadRest(() => (car ? car.pos : player.position), Math.round(nPeople * 0.5)).catch(e => console.warn('Figuren', e)), 1500);
+  const restLoaded = new Promise<void>(res => setTimeout(() => people.loadRest(() => (car ? car.pos : player.position), Math.round(nPeople * 0.5)).catch(e => console.warn('Figuren', e)).finally(() => res()), 1500));
   env.addCasters([...buildings, ...(hq ? props : props.filter(p => !/^(shrub|street_lamp)/.test(p.name))), ...heroMeshes, ...traffic.cars.flatMap(c => c.meshes)]);
   if (hq) { env.addCasters(people.casters()); env.addCasters(trees); }
   for (const m of [terrain, ...roads, ...buildings]) m.receiveShadows = true;
@@ -183,6 +183,8 @@ async function main() {
     document.body.append(d); d.querySelector('button')!.addEventListener('click', () => { d.remove(); missions.save(); });
   }
 
+  // erst alle Grafikprogramme (Shader) fertig übersetzen – sonst ruckelt es in den ersten Sekunden
+  setLoad(0.97, 'Grafik virbereeden'); await scene.whenReadyAsync().catch(() => {});
   setLoad(1, 'Fäerdeg');
   $('loading').classList.add('out'); setTimeout(() => $('loading').remove(), 900);
   const hParam = Number(new URLSearchParams(location.search).get('h')); if (hParam >= 0 && hParam < 24 && new URLSearchParams(location.search).has('h')) env.hour = hParam; // ?h=21 → Startzeit
@@ -190,7 +192,7 @@ async function main() {
   const night = ao ? new NightLights(scene, [terrain, ...roads.filter(m => m.name !== 'markierung')], scene.getMeshByName('fenster') as Mesh | null, lampSpots, ao.meta) : null;
   night?.update(env.hour); let nightT = 0;
   const bench = benchMode ? new Bench(scene, perf, backend, (performance.now() - T0) / 1000, p => player.ctrl.setPosition(p), player.camera, height) : null;
-  if (bench) { env.hour = 15; $('hud').style.opacity = '0.35'; }
+  if (bench) { env.hour = 15; $('hud').style.opacity = '0.35'; bench.hold = true; restLoaded.then(() => setTimeout(() => { bench.hold = false; }, 2000)); } // Messung erst, wenn alles geladen ist
   // Diagnose: einzelne Teile abschaltbar
   const hide = { people: false, traffic: false };
   let city: AbstractMesh[] | null = null;
