@@ -7,6 +7,8 @@ type H = (x: number, z: number) => number;
 /** Sitzplatz für Menschen: Position (Boden), Blickrichtung, Art (Bank oder Café-Tisch) */
 export interface Seat { x: number; y: number; z: number; yaw: number; kind: 'bench' | 'cafe'; taken: boolean; }
 export const seats: Seat[] = [];
+/** Standorte der Straßenlaternen (x, z) – für die Nacht-Lichtkegel (world/night.ts) */
+export const lampSpots: Array<[number, number]> = [];
 /** Vorderseite der Bank-Vorlage relativ zur Drehung (im Spiel geprüft) */
 const BENCH_FRONT = 0;
 
@@ -54,6 +56,7 @@ export async function buildProps(w: WorldData, scene: Scene, height: H, lite = f
     for (const rd of w.roads) { if (rd.tu || rd.br) continue; let acc = 0; for (let i = 0; i + 5 < rd.p.length; i += 3) { const ax = rd.p[i], az = rd.p[i + 1], bx = rd.p[i + 3], bz = rd.p[i + 4], L = Math.hypot(bx - ax, bz - az); if (L < 0.1) continue; const nx = -(bz - az) / L, nz = (bx - ax) / L, off = Math.max(2.2, rd.hw) + 1.2;
       for (let s = (32 - acc % 32) % 32; s < L; s += 32) { const x = ax + (bx - ax) * s / L + nx * off, z = az + (bz - az) * s / L + nz * off; spots.push([x, height(x, z) + 0.15, z, Math.atan2(-nx, -nz)]); } acc += L; } }
     out.push(...place(lamp, spots.slice(0, 900), 120 * far));
+    for (const s of spots.slice(0, 900)) lampSpots.push([s[0], s[2]]);
   } catch (e) { console.warn('Laternen', e); }
   // Bänke aus OSM
   try {

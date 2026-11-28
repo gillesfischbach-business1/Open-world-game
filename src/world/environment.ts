@@ -3,6 +3,7 @@ import {
   DefaultRenderingPipeline, SSAO2RenderingPipeline, ImageProcessingConfiguration, Scene, type Camera, type AbstractMesh,
 } from '@babylonjs/core';
 import type { Preset } from '../core/perf';
+import { NightLights } from './night';
 
 /**
  * Licht & Stimmung: echter Himmel (HDR-Panorama, CC0 Poly Haven) als Umgebungslicht und Spiegelung,
@@ -65,6 +66,6 @@ export class Environment {
     const dir = new Vector3(Math.cos(ang) * 0.8, -Math.max(0.08, el), 0.45).normalize();
     this.sun.direction = dir; this.sun.intensity = 3.4 * Math.max(0, Math.min(1, el * 2.5));
     const warm = 1 - Math.min(1, el * 2); this.sun.diffuse = new Color3(1, 0.95 - warm * 0.25, 0.86 - warm * 0.4);
-    this.scene.environmentIntensity = 0.45 + 0.65 * Math.max(0, Math.min(1, el * 3));
+    this.scene.environmentIntensity = (0.45 + 0.65 * Math.max(0, Math.min(1, el * 3))) * (1 - NightLights.darkness(h) * 0.8); // nachts kaum Himmelslicht
   }
 }

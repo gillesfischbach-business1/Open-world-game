@@ -9,6 +9,7 @@ import { Texture, VertexBuffer, PBRMaterial, type Scene, type Mesh } from '@baby
 interface Meta { x0: number; z0: number; res: number; w: number; h: number }
 export class BakedAO {
   private constructor(private tex: Texture, private px: Uint8ClampedArray, private m: Meta) {}
+  get meta() { return this.m; }
   static async load(scene: Scene, base = './data/'): Promise<BakedAO> {
     const meta = (await (await fetch(base + 'ao.json')).json()) as Meta;
     const blob = await (await fetch(base + 'ao.png')).blob(), bmp = await createImageBitmap(blob);

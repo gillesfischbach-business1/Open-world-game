@@ -1,4 +1,4 @@
-import { Scene, Vector3, HavokPlugin, WebRequest, PBRMaterial, type AbstractMesh, type BaseTexture } from '@babylonjs/core';
+import { Scene, Vector3, HavokPlugin, WebRequest, PBRMaterial, type AbstractMesh, type BaseTexture, type Mesh } from '@babylonjs/core';
 import HavokPhysics from '@babylonjs/havok';
 import havokWasm from '@babylonjs/havok/lib/esm/HavokPhysics.wasm?url';
 import { createEngine } from './core/engine';
@@ -8,12 +8,13 @@ import { Diag, diagPending, cityMeshes } from './core/diag';
 import { Remote } from './core/remote';
 import { BakedAO } from './world/bake';
 import { buildTrees } from './world/trees';
+import { NightLights } from './world/night';
 import { Input } from './core/input';
 import { loadWorld, makeHeight } from './world/data';
 import { Materials } from './world/materials';
 import { buildTerrain } from './world/terrain';
 import { buildRoads, buildBuildings } from './world/city';
-import { buildProps } from './world/props';
+import { buildProps, lampSpots } from './world/props';
 import { Environment } from './world/environment';
 import { Network } from './world/network';
 import { Player } from './player/player';
@@ -59,8 +60,9 @@ async function main() {
   setLoad(0.5, 'Gebaier'); await tick();
   const buildings = buildBuildings(world, scene, mats, height, quality === 'ultra' ? 3 : quality === 'low' ? 0 : perf.device.mobile ? 1 : 2);
   // vorausberechnete Umgebungsverdeckung (tools/bake/bake_ao.py) – fehlt die Datei, läuft das Spiel ohne
+  let ao: BakedAO | null = null;
   if (!new URLSearchParams(location.search).has('noao')) try {
-    const ao = await BakedAO.load(scene);
+    ao = await BakedAO.load(scene);
     ao.applyGround([terrain, ...roads.filter(m => m.name !== 'markierung')]);
     ao.applyWalls(buildings.filter(m => m.name.startsWith('waende_')), height);
   } catch (e) { console.warn('Schattenkarte', e); }
@@ -183,7 +185,10 @@ async function main() {
 
   setLoad(1, 'Fäerdeg');
   $('loading').classList.add('out'); setTimeout(() => $('loading').remove(), 900);
+  const hParam = Number(new URLSearchParams(location.search).get('h')); if (hParam >= 0 && hParam < 24 && new URLSearchParams(location.search).has('h')) env.hour = hParam; // ?h=21 → Startzeit
   env.setHour(env.hour);
+  const night = ao ? new NightLights(scene, [terrain, ...roads.filter(m => m.name !== 'markierung')], scene.getMeshByName('fenster') as Mesh | null, lampSpots, ao.meta) : null;
+  night?.update(env.hour); let nightT = 0;
   const bench = benchMode ? new Bench(scene, perf, backend, (performance.now() - T0) / 1000, p => player.ctrl.setPosition(p), player.camera, height) : null;
   if (bench) { env.hour = 15; $('hud').style.opacity = '0.35'; }
   // Diagnose: einzelne Teile abschaltbar
@@ -209,6 +214,7 @@ async function main() {
     perf.frame(engine.getDeltaTime() / 1000);
     input.update();
     env.setHour((env.hour + dt / 120) % 24); // 1 Spielstunde = 2 Minuten
+    nightT += dt; if (nightT > 0.5) { nightT = 0; night?.update(env.hour); }
     charge = Math.min(100, charge + dt * 7); talkCool -= dt;
 
     // Aktionen
