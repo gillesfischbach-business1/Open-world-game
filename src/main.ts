@@ -7,6 +7,7 @@ import { Bench } from './core/bench';
 import { Diag, diagPending, cityMeshes } from './core/diag';
 import { Remote } from './core/remote';
 import { BakedAO } from './world/bake';
+import { buildTrees } from './world/trees';
 import { Input } from './core/input';
 import { loadWorld, makeHeight } from './world/data';
 import { Materials } from './world/materials';
@@ -75,6 +76,10 @@ async function main() {
   setLoad(0.56, 'Stroosseluuchten a Bänken'); await tick();
   const hq = quality === 'high' || quality === 'ultra';
   const props = await buildProps(world, scene, height, perf.device.mobile || quality === 'low');
+  // Bäume: Sichtweite und Anzahl nach Gerät (nah = volle Krone, fern = vereinfacht)
+  const treeOpt = quality === 'ultra' ? { near: 120, far: 900, max: 3000 } : quality === 'high' ? { near: 60, far: 450, max: 1600 }
+    : quality === 'low' ? { near: 22, far: 140, max: 350 } : perf.device.mobile ? { near: 28, far: 180, max: 700 } : { near: 45, far: 300, max: 1200 };
+  const trees = await buildTrees(world, scene, height, treeOpt).catch(e => { console.warn('Bäume', e); return [] as AbstractMesh[]; });
   setLoad(0.62, 'Blëtz'); await tick();
   const heroMeshes = await player.load(P.heroLight);
 
@@ -89,10 +94,10 @@ async function main() {
   // weitere Figuren im Hintergrund nachladen (mehr Vielfalt, ohne den Start zu bremsen)
   setTimeout(() => people.loadRest(() => (car ? car.pos : player.position), Math.round(nPeople * 0.5)).catch(e => console.warn('Figuren', e)), 1500);
   env.addCasters([...buildings, ...(hq ? props : props.filter(p => !/^(shrub|street_lamp)/.test(p.name))), ...heroMeshes, ...traffic.cars.flatMap(c => c.meshes)]);
-  if (hq) env.addCasters(people.casters());
+  if (hq) { env.addCasters(people.casters()); env.addCasters(trees); }
   for (const m of [terrain, ...roads, ...buildings]) m.receiveShadows = true;
   // Feste Welt: Begrenzungen nicht jedes Bild neu berechnen
-  for (const m of [terrain, ...roads, ...buildings, ...props]) { m.freezeWorldMatrix(); m.doNotSyncBoundingInfo = true; }
+  for (const m of [terrain, ...roads, ...buildings, ...props, ...trees]) { m.freezeWorldMatrix(); m.doNotSyncBoundingInfo = true; }
 
   // Leistungs-Manager an die Stellschrauben anschließen (regelt danach laufend selbst nach)
   perf.attach({

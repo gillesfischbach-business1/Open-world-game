@@ -6,6 +6,7 @@
 | Texturen (Asphalt, Pflaster, Gras, Putz, Beton, Fassade, Ziegel, Rost) | [Poly Haven](https://polyhaven.com) | CC0 |
 | Himmels-Panorama „kloofendal_48d_partly_cloudy_puresky“ | [Poly Haven](https://polyhaven.com) | CC0 |
 | Modelle: Straßenlaterne, Bank, Strauch, Pflanzkübel | [Poly Haven](https://polyhaven.com) | CC0 |
+| Baum-Texturen (Blätter, Rinde) aus „Tree Small 02“ – zu Blätter-Wolken umgebaut (tools/trees/make_leaf_card.py) | [Poly Haven](https://polyhaven.com/a/tree_small_02) | CC0 |
 | Luxemburgische Stimmen | denZLS/luxembourgish-male/female-vits-tts (Zenter fir d'Lëtzebuerger Sprooch, LOD-Daten) | CC BY-NC 4.0 |
 | Engine | Babylon.js | Apache 2.0 |
 | Physik | Havok für Babylon.js | MIT |
