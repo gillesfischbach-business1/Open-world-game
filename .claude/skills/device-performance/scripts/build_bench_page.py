@@ -26,7 +26,7 @@ bins = []
 for d, _, fs in os.walk('.'):
     for f in fs:
         p = os.path.join(d, f)[2:]
-        if p.endswith(('.glb', '.hdr', '.bin')):
+        if p.endswith(('.glb', '.hdr', '.bin', '.env')):
             open(p + '.b64.txt', 'w').write(base64.b64encode(open(p, 'rb').read()).decode()); os.remove(p); bins.append(p)
 boot = """window.__BENCH_HOST = %s;
 window.__BIN = %s;
