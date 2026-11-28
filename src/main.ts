@@ -184,7 +184,7 @@ async function main() {
   }
 
   // erst alle Grafikprogramme (Shader) fertig übersetzen – sonst ruckelt es in den ersten Sekunden
-  setLoad(0.97, 'Grafik virbereeden'); await scene.whenReadyAsync().catch(() => {});
+  setLoad(0.97, 'Grafik virbereeden'); await Promise.race([scene.whenReadyAsync().catch(() => {}), new Promise(r => setTimeout(r, 8000))]); // höchstens 8 s warten – nie hängen bleiben
   setLoad(1, 'Fäerdeg');
   $('loading').classList.add('out'); setTimeout(() => $('loading').remove(), 900);
   const hParam = Number(new URLSearchParams(location.search).get('h')); if (hParam >= 0 && hParam < 24 && new URLSearchParams(location.search).has('h')) env.hour = hParam; // ?h=21 → Startzeit
@@ -269,6 +269,8 @@ async function main() {
   // Cloud-Betrieb: Bild als Video an den Server, Eingaben vom Spieler zurück
   if (new URLSearchParams(location.search).has('stream')) { perf.target = 30; new Remote(scene, engine, input, canvas); }
   addEventListener('resize', () => { engine.resize(); perf.resize(); });
-  (window as unknown as { __letz: unknown }).__letz = { scene, player, env, engine, backend, world, people, traffic, missions, perf, get car() { return car; }, crime };
+  (window as unknown as { __letz: unknown }).__letz = { scene, player, env, engine, backend, world, people, traffic, missions, perf, get car() { return car; }, crime,
+    /** Werkzeug: Himmel als vorgefilterte .env-Datei (tools/sky/make_env.js) */
+    makeEnv: async () => { const { EnvironmentTextureTools } = await import('@babylonjs/core'); const buf = await EnvironmentTextureTools.CreateEnvTextureAsync(scene.environmentTexture as never); let s2 = ''; const u8 = new Uint8Array(buf); for (let i = 0; i < u8.length; i += 0x8000) s2 += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s2); } };
 }
 main().catch(e => { console.error(e); $('ldtxt').textContent = 'Fehler: ' + (e?.message || e); });

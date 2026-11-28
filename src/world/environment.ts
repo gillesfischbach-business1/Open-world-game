@@ -1,5 +1,5 @@
 import {
-  HDRCubeTexture, SSRRenderingPipeline, Constants, DirectionalLight, HemisphericLight, Vector3, Color3, Color4, CascadedShadowGenerator,
+  HDRCubeTexture, CubeTexture, SSRRenderingPipeline, Constants, DirectionalLight, HemisphericLight, Vector3, Color3, Color4, CascadedShadowGenerator,
   DefaultRenderingPipeline, SSAO2RenderingPipeline, ImageProcessingConfiguration, Scene, type Camera, type AbstractMesh,
 } from '@babylonjs/core';
 import type { Preset } from '../core/perf';
@@ -14,7 +14,12 @@ export class Environment {
   hour = 10.5;
   constructor(private scene: Scene, private camera: Camera, P: Preset) {
     const quality = P.shadows >= 2048 && P.ssao ? 'high' : P.shadows > 0 ? 'mid' : 'low', ultra = P.shadows >= 4096;
-    const hdr = new HDRCubeTexture(P.hdr === '1k' ? './assets/hdri/sky_1k.hdr' : './assets/hdri/sky_2k.hdr', scene, P.hdr === '1k' ? 128 : 256, false, true, false, true);
+    // vorgefilterter Himmel (.env, tools/sky/make_env.js): ~6× kleiner als .hdr und ohne Umrechnung beim Start; ?noenv = Original-HDR
+    const env = !new URLSearchParams(location.search).has('noenv');
+    const hdrQ = new URLSearchParams(location.search).get('hdr'); if (hdrQ === '1k' || hdrQ === '2k') P = { ...P, hdr: hdrQ }; // Werkzeug: Himmelsgröße erzwingen
+    // nur die kleine Fassung (Handys) als .env – die große .env-Fassung wurde nie fertig (Start hing), PCs laden das HDR
+    const hdr = env && P.hdr === '1k' ? CubeTexture.CreateFromPrefilteredData('./assets/hdri/sky_1k.env', scene)
+      : new HDRCubeTexture(P.hdr === '1k' ? './assets/hdri/sky_1k.hdr' : './assets/hdri/sky_2k.hdr', scene, P.hdr === '1k' ? 128 : 256, false, true, false, true);
     scene.environmentTexture = hdr; scene.environmentIntensity = 0.9;
     const sky = scene.createDefaultSkybox(hdr, true, 6000, 0, false); if (sky) sky.infiniteDistance = true;
     scene.clearColor = new Color4(0.6, 0.7, 0.85, 1);

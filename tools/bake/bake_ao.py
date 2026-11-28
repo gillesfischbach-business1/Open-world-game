@@ -33,6 +33,7 @@ ground = (TH[j0][:, i0] * (1 - u) + TH[j0][:, i0 + 1] * u) * (1 - v)[:, None] + 
 
 # Gebäude einzeichnen (Punkt-in-Polygon je Zeile, nur innerhalb des Rahmens)
 hf = ground.copy(); inside = np.zeros_like(ground, bool); roofed = np.zeros_like(ground, bool)
+FURNACE = re.compile(r'^Haut fourneau [AB]$', re.I)
 CANOPY = re.compile(r'^Belval-Université$|^Gare |Bahnsteig', re.I)  # offene Dächer (wie src/world/city.ts isCanopy)
 X = x0 + np.arange(nx) * RES
 for _, name, h, ring in W['B']:
@@ -48,6 +49,7 @@ for _, name, h, ring in W['B']:
             if (zi > z) != (zj > z):
                 xc = (xj - xi) * (z - zi) / (zj - zi) + xi; hit ^= xs < xc
         if hit.any() and CANOPY.search(name or ''): roofed[r, c0:c1 + 1] |= hit; continue
+        if FURNACE.search(name or ''): break  # Hochofen ist eine offene Anlage, kein Block (src/world/furnace.ts)
         if hit.any():
             seg = hf[r, c0:c1 + 1]; base = ground[r, c0:c1 + 1].min()
             seg[hit] = np.maximum(seg[hit], base + max(3.5, h)); inside[r, c0:c1 + 1] |= hit

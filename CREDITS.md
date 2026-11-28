@@ -5,6 +5,7 @@
 | Kartendaten Belval (Straßen, Gebäude, Flächen) | © OpenStreetMap-Mitwirkende | ODbL 1.0 |
 | Texturen (Asphalt, Pflaster, Gras, Putz, Beton, Fassade, Ziegel, Rost) | [Poly Haven](https://polyhaven.com) | CC0 |
 | Himmels-Panorama „kloofendal_48d_partly_cloudy_puresky“ | [Poly Haven](https://polyhaven.com) | CC0 |
+| Himmel als vorgefilterte .env-Fassung (Handys) – aus demselben Panorama (tools/sky/make_env.js) | Poly Haven | CC0 |
 | Modelle: Straßenlaterne, Bank, Strauch, Pflanzkübel | [Poly Haven](https://polyhaven.com) | CC0 |
 | Baum-Texturen (Blätter, Rinde) aus „Tree Small 02“ – zu Blätter-Wolken umgebaut (tools/trees/make_leaf_card.py) | [Poly Haven](https://polyhaven.com/a/tree_small_02) | CC0 |
 | Luxemburgische Stimmen | denZLS/luxembourgish-male/female-vits-tts (Zenter fir d'Lëtzebuerger Sprooch, LOD-Daten) | CC BY-NC 4.0 |

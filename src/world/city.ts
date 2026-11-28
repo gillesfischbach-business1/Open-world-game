@@ -2,6 +2,7 @@ import { PBRMaterial, Color3, PhysicsAggregate, PhysicsShapeType, type Mesh, typ
 import earcut from 'earcut';
 import { GeoBuilder } from './geo';
 import { buildWindowDetail, type WindowSpot } from './facade';
+import { buildFurnace, isFurnace } from './furnace';
 import { rng, pip, type Flat, type WorldData } from './data';
 import type { Materials } from './materials';
 
@@ -58,11 +59,12 @@ const area2 = (f: Flat) => { let a = 0; for (let i = 0, j = f.length - 2; i < f.
  */
 export function buildBuildings(w: WorldData, scene: Scene, mats: Materials, height: H, detail = 2): Mesh[] {
   const r = rng(2020), walls = new Map<string, GeoBuilder>(), roof = new GeoBuilder(), glass = new GeoBuilder(), frame = new GeoBuilder(), posts = new GeoBuilder(), units = new GeoBuilder();
-  const winSpots: WindowSpot[] = [];
+  const winSpots: WindowSpot[] = []; const furnaces: Array<[number[], number]> = [];
   const tints = [new Color3(1, 1, 1), new Color3(0.95, 0.9, 0.82), new Color3(0.85, 0.88, 0.92), new Color3(0.96, 0.86, 0.78), new Color3(0.82, 0.86, 0.8)];
   for (const [, name, hRaw, ring] of w.B) {
     if (!ring || ring.length < 6) continue;
     let base = 1e9; for (let i = 0; i < ring.length; i += 2) base = Math.min(base, height(ring[i], ring[i + 1]));
+    if (isFurnace(name)) { furnaces.push([ring, base]); continue; } // eigene Anlage statt Klotz (world/furnace.ts)
     const hgt = Math.max(3.5, hRaw), top = base + hgt, st = styleOf(name, hgt, r);
     const key = st + (st === 'plaster' ? Math.floor(r() * tints.length) : '');
     let g = walls.get(key); if (!g) { g = new GeoBuilder(); walls.set(key, g); }
@@ -151,5 +153,6 @@ export function buildBuildings(w: WorldData, scene: Scene, mats: Materials, heig
   const um = new PBRMaterial('dachtechnik', scene); um.albedoColor = new Color3(0.62, 0.63, 0.62); um.metallic = 0.5; um.roughness = 0.45; um.backFaceCulling = false; um.twoSidedLighting = true;
   const unitM = units.build('dachtechnik', scene, um); if (unitM) { unitM.receiveShadows = true; out.push(unitM); }
   out.push(...buildWindowDetail(scene, winSpots, [0, 0, 70, 220][detail]));
+  for (const [ring, base] of furnaces) out.push(...buildFurnace(scene, ring, base, mats.get('rust'), detail));
   return out;
 }
