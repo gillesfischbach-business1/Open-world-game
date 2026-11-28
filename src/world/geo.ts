@@ -21,6 +21,22 @@ export class GeoBuilder {
     const [a, b, c] = p, ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
     if (ny >= 0) this.quad(p, uv); else this.quad([p[1], p[0], p[3], p[2]], [uv[1], uv[0], uv[3], uv[2]]);
   }
+  /** Viereck, dessen sichtbare Seite nach unten zeigt (Unterseite von Gesimsen) */
+  quadDown(p: number[][], uv: number[][]) {
+    const [a, b, c] = p, ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
+    if (ny < 0) this.quad(p, uv); else this.quad([p[1], p[0], p[3], p[2]], [uv[1], uv[0], uv[3], uv[2]]);
+  }
+  /** Quader ohne Boden (Dachaufbauten); Seiten nach außen */
+  box(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) {
+    const X = [x0, x1], Z = [z0, z1];
+    this.quadUp([[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], [[0, 0], [1, 0], [1, 1], [0, 1]]);
+    const side = (ax: number, az: number, bx: number, bz: number, ox: number, oz: number) => {
+      const q = [[ax, y0, az], [bx, y0, bz], [bx, y1, bz], [ax, y1, az]], uv = [[0, 0], [1, 0], [1, 1], [0, 1]];
+      const e = [bx - ax, bz - az], n = [e[1], -e[0]]; // Normale der Reihenfolge a→b nach oben gestellt
+      if (n[0] * ox + n[1] * oz < 0) this.quad(q, uv); else this.quad([q[1], q[0], q[3], q[2]], uv);
+    };
+    side(X[0], Z[0], X[1], Z[0], 0, -1); side(X[1], Z[1], X[0], Z[1], 0, 1); side(X[0], Z[1], X[0], Z[0], -1, 0); side(X[1], Z[0], X[1], Z[1], 1, 0);
+  }
   build(name: string, scene: Scene, mat: Material, opts: { normals?: boolean } = {}): Mesh | null {
     if (!this.idx.length) return null;
     const vd = new VertexData(); vd.positions = this.pos; vd.indices = this.idx; vd.uvs = this.uv;

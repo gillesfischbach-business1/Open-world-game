@@ -34,7 +34,8 @@ function place(meshes: Mesh[], spots: [number, number, number, number][], dist: 
     const buf = new Float32Array(list.length * 16);
     list.forEach(([x, y, z, yaw], i) => { Quaternion.FromEulerAnglesToRef(0, yaw, 0, q); t.set(x, y, z); Matrix.ComposeToRef(one, q, t, m); m.copyToArray(buf, i * 16); });
     for (const tpl of meshes) {
-      const c = tpl.clone(tpl.name + '@' + k, null, true)!; // teilt die Geometrie mit der Vorlage
+      // eigene Geometrie je Viertel: Thin-Instance-Puffer hängen an der Geometrie – geteilt zeichnete jedes Viertel die Laternen des letzten
+      const c = new Mesh(tpl.name + '@' + k, tpl.getScene()); tpl.geometry!.copy(tpl.name + '#' + k).applyToMesh(c); c.material = tpl.material;
       c.thinInstanceSetBuffer('matrix', buf, 16, true); c.thinInstanceRefreshBoundingInfo(false);
       c.receiveShadows = true; c.isPickable = false; c.addLODLevel(dist, null); // weiter weg: gar nicht zeichnen
       out.push(c);

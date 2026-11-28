@@ -56,7 +56,7 @@ async function main() {
   setLoad(0.44, 'Stroossen'); await tick();
   const roads = buildRoads(world, scene, mats, height);
   setLoad(0.5, 'Gebaier'); await tick();
-  const buildings = buildBuildings(world, scene, mats, height);
+  const buildings = buildBuildings(world, scene, mats, height, quality === 'ultra' ? 3 : quality === 'low' ? 0 : perf.device.mobile ? 1 : 2);
   // vorausberechnete Umgebungsverdeckung (tools/bake/bake_ao.py) – fehlt die Datei, läuft das Spiel ohne
   if (!new URLSearchParams(location.search).has('noao')) try {
     const ao = await BakedAO.load(scene);

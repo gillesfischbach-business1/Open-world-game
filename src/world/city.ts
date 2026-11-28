@@ -1,6 +1,7 @@
 import { PBRMaterial, Color3, PhysicsAggregate, PhysicsShapeType, type Mesh, type Scene } from '@babylonjs/core';
 import earcut from 'earcut';
 import { GeoBuilder } from './geo';
+import { buildWindowDetail, type WindowSpot } from './facade';
 import { rng, pip, type Flat, type WorldData } from './data';
 import type { Materials } from './materials';
 
@@ -51,8 +52,13 @@ const styleOf = (name: string, h: number, r: () => number) => {
 export const isCanopy = (name: string) => /^Belval-Université$|^Gare |Bahnsteig/i.test(name || '');
 const area2 = (f: Flat) => { let a = 0; for (let i = 0, j = f.length - 2; i < f.length; j = i, i += 2) a += (f[j] - f[i]) * (f[j + 1] + f[i + 1]); return a; };
 
-export function buildBuildings(w: WorldData, scene: Scene, mats: Materials, height: H): Mesh[] {
-  const r = rng(2020), walls = new Map<string, GeoBuilder>(), roof = new GeoBuilder(), glass = new GeoBuilder(), frame = new GeoBuilder(), posts = new GeoBuilder();
+/**
+ * detail: 0 = schlicht (schwache Handys), 1 = Brüstungen + Dachaufbauten, 2 = + Gesimse, Geschossbänder, Fensterrahmen in der Nähe,
+ * 3 = wie 2 mit großer Sichtweite (Cloud-Grafikkarte)
+ */
+export function buildBuildings(w: WorldData, scene: Scene, mats: Materials, height: H, detail = 2): Mesh[] {
+  const r = rng(2020), walls = new Map<string, GeoBuilder>(), roof = new GeoBuilder(), glass = new GeoBuilder(), frame = new GeoBuilder(), posts = new GeoBuilder(), units = new GeoBuilder();
+  const winSpots: WindowSpot[] = [];
   const tints = [new Color3(1, 1, 1), new Color3(0.95, 0.9, 0.82), new Color3(0.85, 0.88, 0.92), new Color3(0.96, 0.86, 0.78), new Color3(0.82, 0.86, 0.8)];
   for (const [, name, hRaw, ring] of w.B) {
     if (!ring || ring.length < 6) continue;
@@ -74,11 +80,29 @@ export function buildBuildings(w: WorldData, scene: Scene, mats: Materials, heig
       // Außennormale
       let nx = -(bz - az) / L, nz = (bx - ax) / L; if (pip((ax + bx) / 2 + nx * 0.15, (az + bz) / 2 + nz * 0.15, ring)) { nx = -nx; nz = -nz; }
       const P = (x: number, y: number, z: number) => [x, y, z];
-      const wq = [P(ax, base - 1, az), P(bx, base - 1, bz), P(bx, top, bz), P(ax, top, az)], uvq = [[u0, -1], [u0 + L, -1], [u0 + L, hgt], [u0, hgt]];
+      const par = detail >= 1 && st !== 'rust' ? 0.9 : 0; // Dachbrüstung
+      const wq = [P(ax, base - 1, az), P(bx, base - 1, bz), P(bx, top + par, bz), P(ax, top + par, az)], uvq = [[u0, -1], [u0 + L, -1], [u0 + L, hgt + par], [u0, hgt + par]];
       // Reihenfolge so wählen, dass die Fläche nach außen zeigt
       const e = [bx - ax, 0, bz - az], up = [0, 1, 0], cn = [e[1] * up[2] - e[2] * up[1], e[2] * up[0] - e[0] * up[2], e[0] * up[1] - e[1] * up[0]];
       const out = cn[0] * nx + cn[2] * nz > 0;
       if (out) g.quad(wq, uvq); else g.quad([wq[1], wq[0], wq[3], wq[2]], [uvq[1], uvq[0], uvq[3], uvq[2]]);
+      // senkrechte Fläche parallel zur Wand im Abstand d (nach außen bzw. innen gewandt)
+      const at = (sv: number, y: number, d: number) => [ax + (bx - ax) * sv / L + nx * d, y, az + (bz - az) * sv / L + nz * d];
+      const vface = (gb: GeoBuilder, y0: number, y1: number, d: number, outward = true) => {
+        const q = [at(0, y0, d), at(L, y0, d), at(L, y1, d), at(0, y1, d)], uv = [[u0, y0 - base], [u0 + L, y0 - base], [u0 + L, y1 - base], [u0, y1 - base]];
+        if (out === outward) gb.quad(q, uv); else gb.quad([q[1], q[0], q[3], q[2]], [uv[1], uv[0], uv[3], uv[2]]);
+      };
+      const hface = (gb: GeoBuilder, y: number, d0: number, d1: number, upward: boolean) => {
+        const q = [at(0, y, d0), at(L, y, d0), at(L, y, d1), at(0, y, d1)], uv = [[u0, d0], [u0 + L, d0], [u0 + L, d1], [u0, d1]];
+        if (upward) gb.quadUp(q, uv); else gb.quadDown(q, uv);
+      };
+      if (par) { vface(g, top, top + par, -0.25, false); hface(roof, top + par, 0, -0.25, true); }
+      if (detail >= 2 && st !== 'rust') {
+        if (hgt > 7) { vface(g, top - 0.5, top - 0.15, 0.28); hface(g, top - 0.15, 0, 0.28, true); hface(g, top - 0.5, 0, 0.28, false); } // Gesims
+        if (st === 'facade' || st === 'concrete') for (let y = base + 3.2; y < top - 1.5; y += 3.2) { // Geschossbänder
+          vface(g, y - 0.12, y + 0.08, 0.06); hface(g, y + 0.08, 0, 0.06, true); hface(g, y - 0.12, 0, 0.06, false);
+        }
+      }
       // Fenster: je Geschoss (3,2 m) und Achse (3,2 m) eine Glasscheibe mit Rahmen
       if (st !== 'rust' && L > 3) {
         const floors = Math.floor((hgt - 1) / 3.2), bays = Math.floor(L / 3.2), off = (L - bays * 3.2) / 2;
@@ -91,6 +115,7 @@ export function buildBuildings(w: WorldData, scene: Scene, mats: Materials, heig
           // Fensterbank
           const fb = [pt(s0 - 0.08, y0 - 0.06, 0.12), pt(s1 + 0.08, y0 - 0.06, 0.12), pt(s1 + 0.08, y0, 0.12), pt(s0 - 0.08, y0, 0.12)];
           if (out) frame.quad(fb, [[0, 0], [1, 0], [1, 1], [0, 1]]); else frame.quad([fb[1], fb[0], fb[3], fb[2]], [[1, 0], [0, 0], [0, 1], [1, 1]]);
+          if (detail >= 2) { const c = pt((s0 + s1) / 2, (y0 + y1) / 2, 0.03); winSpots.push({ x: c[0], y: c[1], z: c[2], yaw: Math.atan2(nx, nz), w: s1 - s0, h: y1 - y0 }); }
         }
       }
       u0 += L;
@@ -99,6 +124,16 @@ export function buildBuildings(w: WorldData, scene: Scene, mats: Materials, heig
     const tri = earcut(ring), b0 = roof.count;
     for (let i = 0; i < n; i++) roof.vert(ring[i * 2], top, ring[i * 2 + 1], 0, 1, 0, ring[i * 2], ring[i * 2 + 1]);
     for (let i = 0; i < tri.length; i += 3) roof.tri(b0 + tri[i], b0 + tri[i + 1], b0 + tri[i + 2]);
+    // Technik auf dem Flachdach (Lüftung, Aufzug) – nur größere Dächer
+    const A = Math.abs(area2(ring)) / 2;
+    if (detail >= 1 && !isCanopy(name) && A > 150) {
+      let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (let i = 0; i < n; i++) { x0 = Math.min(x0, ring[2 * i]); x1 = Math.max(x1, ring[2 * i]); z0 = Math.min(z0, ring[2 * i + 1]); z1 = Math.max(z1, ring[2 * i + 1]); }
+      for (let k = 0, want = Math.min(3, 1 + Math.floor(A / 600)), tries = 0; k < want && tries < 20; tries++) {
+        const sx = 1.4 + r() * 1.8, sz = 1.2 + r() * 1.4, sy = 0.9 + r() * 1.1, cx = x0 + r() * (x1 - x0), cz = z0 + r() * (z1 - z0);
+        if (![[-1, -1], [1, -1], [1, 1], [-1, 1]].every(([a, b]) => pip(cx + a * (sx / 2 + 0.6), cz + b * (sz / 2 + 0.6), ring))) continue;
+        units.box(cx - sx / 2, top, cz - sz / 2, cx + sx / 2, top + sy, cz + sz / 2); k++;
+      }
+    }
   }
   const out: Mesh[] = [];
   for (const [key, g] of walls) {
@@ -113,5 +148,8 @@ export function buildBuildings(w: WorldData, scene: Scene, mats: Materials, heig
   const gl = glass.build('fenster', scene, gm), fr = frame.build('fensterbaenke', scene, fm);
   for (const m of out) { m.receiveShadows = true; new PhysicsAggregate(m, PhysicsShapeType.MESH, { mass: 0 }, scene); }
   if (gl) out.push(gl); if (fr) out.push(fr);
+  const um = new PBRMaterial('dachtechnik', scene); um.albedoColor = new Color3(0.62, 0.63, 0.62); um.metallic = 0.5; um.roughness = 0.45; um.backFaceCulling = false; um.twoSidedLighting = true;
+  const unitM = units.build('dachtechnik', scene, um); if (unitM) { unitM.receiveShadows = true; out.push(unitM); }
+  out.push(...buildWindowDetail(scene, winSpots, [0, 0, 70, 220][detail]));
   return out;
 }
