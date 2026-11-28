@@ -129,7 +129,7 @@ export class PerfManager {
     this.samples = []; this.winT = 0;
     if (this.warm > 0) { this.warm--; return; }
     if (this.forced) return;
-    if (this.fps < this.target * 0.85) { this.bad++; this.good = 0; } else if (this.fps > this.target * 1.2 && this.minFps > this.target * 0.8) { this.good++; this.bad = 0; } else { this.bad = 0; this.good = Math.max(0, this.good - 1); }
+    if (this.fps < this.target * 0.85) { this.bad++; this.good = 0; } else if (this.fps > this.target * 1.35 && this.minFps > this.target * 0.95) { /* nur mit echter Reserve schärfer stellen (Gleichmäßigkeit vor Schärfe; S20 FE: 1,2× senkte die 5 %-Werte auf 29) */ this.good++; this.bad = 0; } else { this.bad = 0; this.good = Math.max(0, this.good - 1); }
     if (this.fps < this.target * 0.55) { this.bad = 0; this.degrade(); this.degrade(); } // weit darunter: sofort zwei Schritte
     else if (this.bad >= 2) { this.bad = 0; this.degrade(); }
     if (this.good >= 6) { this.good = 0; this.improve(); }
