@@ -83,3 +83,9 @@ Vom Emulationstest geprüft (`tools/devicetest/run.mjs`):
 - **WebGL2 statt WebGPU auf Android** (Claude-App-WebView): 9 vs. 4 FPS. `core/engine.ts` wählt das auf Handys automatisch.
 - Punktlichter kosten auch bei Intensität 0 – auf Mobilgeräten werden sie entfernt.
 - Prüfen mit Eckpunkt-Zählung inkl. Thin-Instances: `Σ getTotalVertices() × max(1, thinInstanceCount)` der aktiven Meshes.
+
+## Falle: Thin-Instances und geteilte Geometrie (Nov 2026)
+Thin-Instance-Puffer (`world0..3`) liegen an der **Geometrie**, nicht am Mesh. Mehrere Meshes mit geteilter
+Geometrie (`clone()`, `geometry.applyToMesh`) überschreiben sich gegenseitig: alle zeichnen die Positionen des
+zuletzt gesetzten Puffers. Je Viertel daher `tpl.geometry.copy(id).applyToMesh(mesh)`.
+Prüfen: Instanzen eines Viertels müssen räumlich nah beieinander liegen (Streuung < Viertelgröße).
